@@ -1,0 +1,39 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile C++ core (solver.exe) with static runtime
+        shell: bash
+        run: |
+          g++ -O3 -std=c++17 -static -static-libgcc -static-libstdc++ solver.cpp -o solver.exe
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build single-file GUI executable (JacksonScheduler.exe)
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name "JacksonScheduler" --add-binary "solver.exe;." app.py
+
+      - name: Upload Windows EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JacksonScheduler-Windows-x64
+          path: dist/JacksonScheduler.exe
