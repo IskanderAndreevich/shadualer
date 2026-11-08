@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Расписание Джексона (J2 || C_max) — Веб-приложение & Диаграмма Гантта</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+  <!-- Верхняя панель -->
+  <header class="bg-slate-800 text-white px-4 py-3 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 font-bold text-sm">J2</span>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight">Задача Джексона (2 прибора, 4 типа требований)</h1>
+          <p class="text-xs text-slate-300">Кроссплатформенная веб-версия (J2 || C_max) — работает в любом браузере без установки</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btn-preset-1" type="button" class="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm font-medium transition">
+          Пример 1: Все 4 типа
+        </button>
+        <button id="btn-preset-2" type="button" class="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm font-medium transition">
+          Пример 2: Чистый Тип 1 (Окно слева)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основной контент -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-4 flex flex-col gap-4">
+    <!-- Уведомление об ошибке -->
+    <div id="error-banner" class="hidden rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800 flex items-center justify-between">
+      <span id="error-message"></span>
+      <button id="btn-close-error" type="button" class="text-red-600 hover:text-red-900 font-semibold ml-4">✕</button>
+    </div>
+
+    <!-- Панель ввода данных -->
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+      <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
+        Входные данные (длительности и перестановки)
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+        <!-- Левая колонка -->
+        <div class="space-y-2.5">
+          <div>
+            <label for="ent-t1" class="block text-xs font-medium text-slate-600 mb-1">
+              Требования Типа 1 (M1 → M2, пары <code class="mono text-blue-700">a_j b_j</code> через запятую):
+            </label>
+            <input id="ent-t1" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 6, 5 2, 4 5" />
+          </div>
+          <div>
+            <label for="ent-pi1" class="block text-xs font-medium text-slate-600 mb-1">
+              Перестановка π₁ (номера с 1 через пробел):
+            </label>
+            <input id="ent-pi1" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1 2 3" />
+          </div>
+          <div>
+            <label for="ent-t3" class="block text-xs font-medium text-slate-600 mb-1">
+              Требования Типа 3 (<code class="mono text-amber-700">p_j</code> только на M1 через пробел):
+            </label>
+            <input id="ent-t3" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 2" />
+          </div>
+        </div>
+
+        <!-- Правая колонка -->
+        <div class="space-y-2.5">
+          <div>
+            <label for="ent-t2" class="block text-xs font-medium text-slate-600 mb-1">
+              Требования Типа 2 (M2 → M1, пары <code class="mono text-emerald-700">c_j d_j</code> через запятую):
+            </label>
+            <input id="ent-t2" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4 5, 8 3, 2 6" />
+          </div>
+          <div>
+            <label for="ent-pi2" class="block text-xs font-medium text-slate-600 mb-1">
+              Перестановка π₂ (номера с 1 через пробел):
+            </label>
+            <input id="ent-pi2" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1 2 3" />
+          </div>
+          <div>
+            <label for="ent-t4" class="block text-xs font-medium text-slate-600 mb-1">
+              Требования Типа 4 (<code class="mono text-purple-700">q_j</code> только на M2 через пробел):
+            </label>
+            <input id="ent-t4" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Кнопки управления и чекбокс -->
+      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-4">
+        <button id="btn-solve" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>▶ Рассчитать и построить диаграмму Гантта</span>
+        </button>
+
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-slate-700">
+          <input id="chk-shift-right" type="checkbox" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300" />
+          <span>Сдвинуть вторые операции вправо (консолидировать окно простоя слева)</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Панель метрик -->
+    <section class="bg-slate-200/80 border border-slate-300 rounded-xl px-4 py-3">
+      <pre id="stats-label" class="mono text-xs sm:text-sm text-slate-900 whitespace-pre-wrap leading-relaxed"></pre>
+    </section>
+
+    <!-- Диаграмма Гантта -->
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex-1 flex flex-col min-h-[340px]">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">
+          Диаграмма Гантта (Г. Гантт, 1903)
+        </h2>
+        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500 inline-block"></span>Тип 1 (M1 → M2)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>Тип 2 (M2 → M1)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span>Тип 3 (только M1)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-purple-500 inline-block"></span>Тип 4 (только M2)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-200 border border-red-400 inline-block"></span>Окно простоя</span>
+        </div>
+      </div>
+
+      <div id="canvas-container" class="relative flex-1 w-full min-h-[290px]">
+        <canvas id="gantt-canvas" class="w-full h-full block"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const COLORS = {
+      1: { main: "#3b82f6", tail: "#93c5fd", label: "Тип 1 (M1 → M2)" },
+      2: { main: "#10b981", tail: "#6ee7b7", label: "Тип 2 (M2 → M1)" },
+      3: { main: "#f59e0b", tail: "#fcd34d", label: "Тип 3 (только M1)" },
+      4: { main: "#8b5cf6", tail: "#c4b5fd", label: "Тип 4 (только M2)" }
+    };
+
+    let lastResult = null;
+
+    function showError(msg) {
+      const banner = document.getElementById("error-banner");
+      const text = document.getElementById("error-message");
+      text.textContent = msg;
+      banner.classList.remove("hidden");
+    }
+
+    function hideError() {
+      document.getElementById("error-banner").classList.add("hidden");
+    }
+
+    function fmtNum(val) {
+      return Number(val.toFixed(4)).toString();
+    }
+
+    // Точный порт C++ ядра (solver.cpp)
+    function appendInitialBlocks(machineId, twoStageType, twoStageJobs, permutation, singleStageType, singleStageDurations, ganttBlocks) {
+      let currentTime = 0.0;
+      for (const jobIndex of permutation) {
+        const duration = twoStageJobs[jobIndex].firstStage;
+        const displayNumber = jobIndex + 1;
+        ganttBlocks.push({
+          machine: machineId,
+          type: twoStageType,
+          id: displayNumber,
+          start: currentTime,
+          end: currentTime + duration
+        });
+        currentTime += duration;
+      }
+      for (let i = 0; i < singleStageDurations.length; i++) {
+        const duration = singleStageDurations[i];
+        const displayNumber = i + 1;
+        ganttBlocks.push({
+          machine: machineId,
+          type: singleStageType,
+          id: displayNumber,
+          start: currentTime,
+          end: currentTime + duration
+        });
+        currentTime += duration;
+      }
+      return currentTime;
+    }
+
+    function evaluateConveyorTail(machineId, jobType, initialBlockLoad, jobs, permutation, ganttBlocks) {
+      let prevMachineReadyTime = 0.0;
+      let currMachineFreeTime = initialBlockLoad;
+      let tailWorkDuration = 0.0;
+
+      for (const jobIndex of permutation) {
+        prevMachineReadyTime += jobs[jobIndex].firstStage;
+        const operationStart = Math.max(currMachineFreeTime, prevMachineReadyTime);
+        const operationDuration = jobs[jobIndex].secondStage;
+        const operationEnd = operationStart + operationDuration;
+        const displayNumber = jobIndex + 1;
+
+        ganttBlocks.push({
+          machine: machineId,
+          type: jobType,
+          id: displayNumber,
+          start: operationStart,
+          end: operationEnd
+        });
+
+        currMachineFreeTime = operationEnd;
+        tailWorkDuration += operationDuration;
+      }
+
+      const totalWorkTime = initialBlockLoad + tailWorkDuration;
+      const completionTime = currMachineFreeTime;
+      const internalIdleTime = completionTime - totalWorkTime;
+
+      return {
+        initialBlockLoad,
+        totalWorkTime,
+        completionTime,
+        internalIdleTime,
+        totalIdleTime: 0.0
+      };
+    }
+
+    function calculateSchedule(input) {
+      const ganttBlocks = [];
+      const initialLoadM1 = appendInitialBlocks(
+        1, 1, input.type1Jobs, input.permutationType1,
+        3, input.type3Durations, ganttBlocks
+      );
+      const initialLoadM2 = appendInitialBlocks(
+        2, 2, input.type2Jobs, input.permutationType2,
+        4, input.type4Durations, ganttBlocks
+      );
+
+      const m1Metrics = evaluateConveyorTail(
+        1, 2, initialLoadM1, input.type2Jobs, input.permutationType2, ganttBlocks
+      );
+      const m2Metrics = evaluateConveyorTail(
+        2, 1, initialLoadM2, input.type1Jobs, input.permutationType1, ganttBlocks
+      );
+
+      const makespan = Math.max(m1Metrics.completionTime, m2Metrics.completionTime);
+      m1Metrics.totalIdleTime = makespan - m1Metrics.totalWorkTime;
+      m2Metrics.totalIdleTime = makespan - m2Metrics.totalWorkTime;
+
+      return {
+        cMax: makespan,
+        m1: [m1Metrics.initialBlockLoad, m1Metrics.totalWorkTime, m1Metrics.completionTime, m1Metrics.internalIdleTime, m1Metrics.totalIdleTime],
+        m2: [m2Metrics.initialBlockLoad, m2Metrics.totalWorkTime, m2Metrics.completionTime, m2Metrics.internalIdleTime, m2Metrics.totalIdleTime],
+        blocks: ganttBlocks
+      };
+    }
+
+    function parseTwoStage(text) {
+      if (!text.trim()) return [];
+      const jobs = [];
+      for (const pair of text.split(",")) {
+        const parts = pair.trim().split(/\s+/).filter(Boolean);
+        if (parts.length !== 2) {
+          throw new Error(`Ожидалась пара чисел (op1 op2), получено: '${pair.trim()}'`);
+        }
+        const a = Number(parts[0]);
+        const b = Number(parts[1]);
+        if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
+          throw new Error(`Некорректные длительности в паре: '${pair.trim()}'`);
+        }
+        jobs.push({ firstStage: a, secondStage: b });
+      }
+      return jobs;
+    }
+
+    function parseFloats(text) {
+      if (!text.trim()) return [];
+      return text.trim().split(/\s+/).map((x) => {
+        const v = Number(x);
+        if (Number.isNaN(v) || v < 0) {
+          throw new Error(`Некорректное число: '${x}'`);
+        }
+        return v;
+      });
+    }
+
+    function parsePermutation(text, n, name) {
+      if (n === 0) return [];
+      const nums = text.trim().split(/\s+/).filter(Boolean).map((x) => parseInt(x, 10));
+      const sorted = [...nums].sort((a, b) => a - b);
+      const expected = Array.from({ length: n }, (_, i) => i + 1);
+      if (sorted.length !== n || !sorted.every((val, idx) => val === expected[idx])) {
+        throw new Error(`Перестановка ${name} должна содержать числа от 1 до ${n} без повторений.`);
+      }
+      return nums.map((x) => x - 1);
+    }
+
+    function applyRightShift(blocks, mIdx, CEnd) {
+      const tailType = mIdx === 1 ? 2 : 1;
+      const head = blocks.filter((b) => b.machine === mIdx && b.type !== tailType).map((b) => ({ ...b }));
+      const tail = blocks.filter((b) => b.machine === mIdx && b.type === tailType).map((b) => ({ ...b }));
+      let cursor = CEnd;
+      for (let i = tail.length - 1; i >= 0; i--) {
+        const dur = tail[i].end - tail[i].start;
+        tail[i].end = cursor;
+        tail[i].start = cursor - dur;
+        cursor -= dur;
+      }
+      return [...head, ...tail];
+    }
+
+    function solveAndDraw() {
+      hideError();
+      try {
+        const t1 = parseTwoStage(document.getElementById("ent-t1").value);
+        const pi1 = parsePermutation(document.getElementById("ent-pi1").value, t1.length, "π₁");
+        const t2 = parseTwoStage(document.getElementById("ent-t2").value);
+        const pi2 = parsePermutation(document.getElementById("ent-pi2").value, t2.length, "π₂");
+        const t3 = parseFloats(document.getElementById("ent-t3").value);
+        const t4 = parseFloats(document.getElementById("ent-t4").value);
+
+        lastResult = calculateSchedule({
+          type1Jobs: t1,
+          permutationType1: pi1,
+          type2Jobs: t2,
+          permutationType2: pi2,
+          type3Durations: t3,
+          type4Durations: t4
+        });
+        redrawCached();
+      } catch (err) {
+        showError(err.message || String(err));
+      }
+    }
+
+    function redrawCached() {
+      if (!lastResult) return;
+      const res = lastResult;
+      const cMax = res.cMax;
+      const m1 = res.m1;
+      const m2 = res.m2;
+
+      document.getElementById("stats-label").textContent =
+        `ОБЩЕЕ ВРЕМЯ ЗАВЕРШЕНИЯ (C_max): ${fmtNum(cMax)}\n` +
+        `Прибор 1 (M1):  Стартовый блок T₁ = ${fmtNum(m1[0])}  |  Полезная работа = ${fmtNum(m1[1])}  |  Завершение C¹ = ${fmtNum(m1[2])}  |  Внутр. простой = ${fmtNum(m1[3])}  |  Полный простой = ${fmtNum(m1[4])}\n` +
+        `Прибор 2 (M2):  Стартовый блок T₂ = ${fmtNum(m2[0])}  |  Полезная работа = ${fmtNum(m2[1])}  |  Завершение C² = ${fmtNum(m2[2])}  |  Внутр. простой = ${fmtNum(m2[3])}  |  Полный простой = ${fmtNum(m2[4])}`;
+
+      const container = document.getElementById("canvas-container");
+      const canvas = document.getElementById("gantt-canvas");
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(container.clientWidth, 600);
+      const h = Math.max(container.clientHeight, 290);
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      const leftPad = 130;
+      const rightPad = 50;
+      const usableW = w - leftPad - rightPad;
+      const scale = usableW / Math.max(cMax, 1.0);
+
+      const shiftRight = document.getElementById("chk-shift-right").checked;
+      const bM1 = shiftRight
+        ? applyRightShift(res.blocks, 1, m1[2])
+        : res.blocks.filter((b) => b.machine === 1);
+      const bM2 = shiftRight
+        ? applyRightShift(res.blocks, 2, m2[2])
+        : res.blocks.filter((b) => b.machine === 2);
+
+      const yM1 = 60;
+      const yM2 = 180;
+      const barH = 56;
+
+      // Сетка времени
+      const step = cMax <= 20 ? 1 : (cMax <= 50 ? 2 : 5);
+      ctx.save();
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.fillStyle = "#64748b";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.setLineDash([2, 2]);
+      for (let t = 0; t <= Math.floor(cMax) + 1; t += step) {
+        const x = leftPad + t * scale;
+        ctx.beginPath();
+        ctx.moveTo(x, 30);
+        ctx.lineTo(x, yM2 + barH + 25);
+        ctx.stroke();
+        ctx.fillText(fmtNum(t), x, 20);
+      }
+      ctx.restore();
+
+      drawMachineTrack(ctx, "Прибор 1 (M1)", yM1, barH, bM1, m1[0], cMax, leftPad, scale, "T₁");
+      drawMachineTrack(ctx, "Прибор 2 (M2)", yM2, barH, bM2, m2[0], cMax, leftPad, scale, "T₂");
+
+      // Финальная отсечка C_max
+      const xCmax = leftPad + cMax * scale;
+      ctx.save();
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      ctx.moveTo(xCmax, 25);
+      ctx.lineTo(xCmax, yM2 + barH + 28);
+      ctx.stroke();
+
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 13px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`C_max = ${fmtNum(cMax)}`, xCmax, yM2 + barH + 44);
+      ctx.restore();
+    }
+
+    function drawIdleBox(ctx, x1, y1, x2, y2, dur, label) {
+      ctx.save();
+      ctx.fillStyle = "#fee2e2";
+      ctx.strokeStyle = "#fca5a5";
+      ctx.lineWidth = 1;
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+      if (x2 - x1 > 38) {
+        ctx.fillStyle = "#b91c1c";
+        ctx.font = "italic 11px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - 4);
+        ctx.fillText(fmtNum(dur), (x1 + x2) / 2, (y1 + y2) / 2 + 11);
+      }
+      ctx.restore();
+    }
+
+    function drawMachineTrack(ctx, title, y, h, blocks, tVal, cMax, leftPad, scale, tName) {
+      ctx.save();
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 13px Inter, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(title, 12, y + h / 2);
+
+      // Фон дорожки
+      ctx.fillStyle = "#f8fafc";
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.fillRect(leftPad, y, cMax * scale, h);
+      ctx.strokeRect(leftPad, y, cMax * scale, h);
+
+      // Интервалы простоя
+      let cursor = 0.0;
+      for (const b of blocks) {
+        if (b.start > cursor + 1e-6) {
+          drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + b.start * scale, y + h, b.start - cursor, "Окно простоя");
+        }
+        cursor = b.end;
+      }
+      if (cMax > cursor + 1e-6) {
+        drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + cMax * scale, y + h, cMax - cursor, "Простой");
+      }
+
+      // Блоки операций
+      for (const b of blocks) {
+        const x1 = leftPad + b.start * scale;
+        const x2 = leftPad + b.end * scale;
+        const palette = COLORS[b.type];
+        const isTail = (b.machine === 1 && b.type === 2) || (b.machine === 2 && b.type === 1);
+        const fillCol = isTail ? palette.tail : palette.main;
+        const textCol = isTail ? "#0f172a" : "#ffffff";
+
+        ctx.fillStyle = fillCol;
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = 1;
+        ctx.fillRect(x1, y, x2 - x1, h);
+        ctx.strokeRect(x1, y, x2 - x1, h);
+
+        const opMap = {
+          "1_1": `a_${b.id}`, "2_1": `b_${b.id}`,
+          "2_2": `c_${b.id}`, "1_2": `d_${b.id}`,
+          "1_3": `p_${b.id}`, "2_4": `q_${b.id}`
+        };
+        const opName = opMap[`${b.machine}_${b.type}`];
+        const dur = b.end - b.start;
+
+        if (x2 - x1 > 26) {
+          ctx.fillStyle = textCol;
+          ctx.textAlign = "center";
+          ctx.font = "bold 12px Inter, sans-serif";
+          ctx.fillText(opName, (x1 + x2) / 2, y + h / 2 - 7);
+          ctx.font = "11px Inter, sans-serif";
+          ctx.fillText(`(${fmtNum(dur)})`, (x1 + x2) / 2, y + h / 2 + 9);
+        }
+
+        ctx.fillStyle = "#334155";
+        ctx.textAlign = "center";
+        ctx.font = "11px Inter, sans-serif";
+        ctx.fillText(fmtNum(b.end), x2, y + h + 12);
+      }
+
+      // Рубеж T1 / T2
+      if (tVal > 0) {
+        const xT = leftPad + tVal * scale;
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 2]);
+        ctx.beginPath();
+        ctx.moveTo(xT, y - 10);
+        ctx.lineTo(xT, y + h + 10);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#0f172a";
+        ctx.textAlign = "center";
+        ctx.font = "bold 11px Inter, sans-serif";
+        ctx.fillText(`${tName}=${fmtNum(tVal)}`, xT, y - 15);
+      }
+      ctx.restore();
+    }
+
+    function setEntries(t1, pi1, t2, pi2, t3, t4, shiftRight) {
+      document.getElementById("ent-t1").value = t1;
+      document.getElementById("ent-pi1").value = pi1;
+      document.getElementById("ent-t2").value = t2;
+      document.getElementById("ent-pi2").value = pi2;
+      document.getElementById("ent-t3").value = t3;
+      document.getElementById("ent-t4").value = t4;
+      document.getElementById("chk-shift-right").checked = shiftRight;
+      solveAndDraw();
+    }
+
+    function loadPreset1() {
+      setEntries("3 6, 5 2, 4 5", "1 2 3", "4 5, 8 3, 2 6", "1 2 3", "3 2", "4", false);
+    }
+
+    function loadPreset2() {
+      setEntries("4 3, 6 2, 5 4", "1 2 3", "", "", "", "", true);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("btn-preset-1").addEventListener("click", loadPreset1);
+      document.getElementById("btn-preset-2").addEventListener("click", loadPreset2);
+      document.getElementById("btn-solve").addEventListener("click", solveAndDraw);
+      document.getElementById("chk-shift-right").addEventListener("change", solveAndDraw);
+      document.getElementById("btn-close-error").addEventListener("click", hideError);
+      window.addEventListener("resize", redrawCached);
+      loadPreset1();
+    });
+  </script>
+</body>
+</html>
