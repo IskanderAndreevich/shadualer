@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Расписание Джексона (J2 || C_max) — Веб-приложение & Диаграмма Гантта</title>
+  <title>Расписание Джексона (J2 || C_max) — Вихрь Мерсенна (mt19937_64), Оптимум/Антиоптимум & Диаграмма Гантта</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,8 +26,8 @@
       <div class="flex items-center gap-3">
         <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 font-bold text-sm">J2</span>
         <div>
-          <h1 class="text-base sm:text-lg font-bold tracking-tight">Задача Джексона (2 прибора, 4 типа требований)</h1>
-          <p class="text-xs text-slate-300">Кроссплатформенная веб-версия (J2 || C_max) — работает в любом браузере без установки</p>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight">Задача Джексона (J2 || C_max) — Положительные целые числа & Вихрь Мерсенна (mt19937_64)</h1>
+          <p class="text-xs text-slate-300">Генерация по 4 методам со случайной перестановкой, поиск оптимума и антиоптимума, диаграмма Гантта</p>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -35,7 +35,7 @@
           Пример 1: Все 4 типа
         </button>
         <button id="btn-preset-2" type="button" class="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm font-medium transition">
-          Пример 2: Чистый Тип 1 (Окно слева)
+          Пример 2: Конвейер (Окно слева)
         </button>
       </div>
     </div>
@@ -49,10 +49,96 @@
       <button id="btn-close-error" type="button" class="text-red-600 hover:text-red-900 font-semibold ml-4">✕</button>
     </div>
 
-    <!-- Панель ввода данных -->
+    <!-- 1. Генератор интервалов и длительностей (Вихрь Мерсенна mt19937_64) -->
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">
+          1. Генератор интервалов и длительностей (Вихрь Мерсенна <code class="mono text-teal-700">mt19937_64</code>, целые числа ≥ 1)
+        </h2>
+        <span id="seed-badge" class="mono text-xs bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-md">
+          Генератор: 64-bit Mersenne Twister (mt19937_64)
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 items-end">
+        <div>
+          <label for="gen-n-total" class="block text-xs font-semibold text-slate-700 mb-1">n (общее = n₁+n₂):</label>
+          <input id="gen-n-total" type="number" min="0" max="100" value="6" placeholder="n₁+n₂" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-n1" class="block text-xs font-medium text-slate-600 mb-1">n₁ (Тип 1, авто):</label>
+          <input id="gen-n1" type="number" min="0" max="100" value="5" placeholder="авто (n−n₂)" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-n2" class="block text-xs font-medium text-slate-600 mb-1">n₂ (Тип 2, авто):</label>
+          <input id="gen-n2" type="number" min="0" max="100" value="1" placeholder="авто (n−n₁)" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-n3" class="block text-xs font-medium text-slate-600 mb-1">n₃ (Тип 3):</label>
+          <input id="gen-n3" type="number" min="0" max="100" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-n4" class="block text-xs font-medium text-slate-600 mb-1">n₄ (Тип 4):</label>
+          <input id="gen-n4" type="number" min="0" max="100" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div class="col-span-2">
+          <label for="gen-method" class="block text-xs font-semibold text-slate-700 mb-1">Метод генерации (1..4):</label>
+          <select id="gen-method" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <option value="1">Метод 1: Независимые U[20, 1000]</option>
+            <option value="2">Метод 2: Зависимый предел (от β)</option>
+            <option value="3">Метод 3: Интервал ширины ≤ 100 (от β)</option>
+            <option value="4">Метод 4: Мультипликативный (от β, α)</option>
+          </select>
+        </div>
+        <div>
+          <label for="gen-beta" class="block text-xs font-medium text-slate-600 mb-1">Параметр β:</label>
+          <input id="gen-beta" type="number" step="0.05" value="0.3" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-alpha" class="block text-xs font-medium text-slate-600 mb-1">Параметр α:</label>
+          <input id="gen-alpha" type="number" step="0.1" value="1.5" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+        <div>
+          <label for="gen-seed" class="block text-xs font-semibold text-slate-700 mb-1">Seed (0=случ.):</label>
+          <input id="gen-seed" type="number" min="0" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        </div>
+      </div>
+
+      <!-- Пометка с формулой выбранного метода -->
+      <div class="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3.5 py-2 text-xs text-emerald-950">
+        <div class="font-semibold mb-0.5">Пометка по вычислению выбранного метода:</div>
+        <div id="method-formula-note" class="mono text-xs text-emerald-900">
+          Метод 1: op₁ = round(U[20, 1000]), op₂ = round(U[20, 1000]) — две независимые случайные целые величины (параметры β и α не используются).
+        </div>
+      </div>
+
+      <!-- Пометка о Seed и авторасчете n = n1 + n2 -->
+      <div class="mt-2.5 rounded-lg bg-slate-100 border border-slate-200 px-3.5 py-2 text-xs text-slate-700 leading-relaxed">
+        <div>
+          <strong class="text-slate-900">Что такое Seed (зерно генератора) и на что он влияет:</strong>
+          <code class="mono">Seed</code> задаёт начальное внутреннее состояние 64-битного генератора псевдослучайных чисел Вихря Мерсенна (<code class="mono">mt19937_64</code>).
+          При одинаковом <code class="mono">Seed &gt; 0</code> (и тех же параметрах <code class="mono">n, n₁, n₂, методе, β, α</code>) генератор создаст <strong>100% идентичные длительности всех операций и ту же самую стартовую случайную перестановку</strong> (для воспроизводимости экспериментов). Если указать <code class="mono">Seed = 0</code>, зерно выбирается случайно при каждом нажатии.
+        </div>
+        <div class="mt-1">
+          <strong class="text-slate-900">Авторасчёт количества работ (<code class="mono">n = n₁ + n₂</code>):</strong>
+          можно задать общее число <code class="mono">n</code> и только <code class="mono">n₁</code> (или только <code class="mono">n₂</code>, оставив второе поле пустым) — второй параметр рассчитается автоматически как <code class="mono">n − n₁</code> (или <code class="mono">n − n₂</code>).
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p class="text-xs text-slate-500">
+          При генерации создаются положительные целые длительности из диапазона <code class="mono">[20, 1000]</code> и подставляется <strong>случайная перестановка</strong>.
+        </p>
+        <button id="btn-generate" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>🎲 Сгенерировать работы + случайную перестановку (mt19937_64)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. Панель ввода данных и выбора перестановки -->
     <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
       <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
-        Входные данные (длительности и перестановки)
+        2. Входные данные (положительные целые длительности и перестановки)
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -60,7 +146,7 @@
         <div class="space-y-2.5">
           <div>
             <label for="ent-t1" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 1 (M1 → M2, пары <code class="mono text-blue-700">a_j b_j</code> через запятую):
+              Требования Типа 1 (M1 → M2, целые пары <code class="mono text-blue-700">a_j b_j</code> через запятую):
             </label>
             <input id="ent-t1" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 6, 5 2, 4 5" />
           </div>
@@ -72,7 +158,7 @@
           </div>
           <div>
             <label for="ent-t3" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 3 (<code class="mono text-amber-700">p_j</code> только на M1 через пробел):
+              Требования Типа 3 (целые <code class="mono text-amber-700">p_j</code> только на M1 через пробел):
             </label>
             <input id="ent-t3" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 2" />
           </div>
@@ -82,7 +168,7 @@
         <div class="space-y-2.5">
           <div>
             <label for="ent-t2" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 2 (M2 → M1, пары <code class="mono text-emerald-700">c_j d_j</code> через запятую):
+              Требования Типа 2 (M2 → M1, целые пары <code class="mono text-emerald-700">c_j d_j</code> через запятую):
             </label>
             <input id="ent-t2" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4 5, 8 3, 2 6" />
           </div>
@@ -94,7 +180,7 @@
           </div>
           <div>
             <label for="ent-t4" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 4 (<code class="mono text-purple-700">q_j</code> только на M2 через пробел):
+              Требования Типа 4 (целые <code class="mono text-purple-700">q_j</code> только на M2 через пробел):
             </label>
             <input id="ent-t4" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4" />
           </div>
@@ -102,14 +188,26 @@
       </div>
 
       <!-- Кнопки управления и чекбокс -->
-      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-4">
-        <button id="btn-solve" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>▶ Рассчитать и построить диаграмму Гантта</span>
+      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+        <button id="btn-solve-random" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>🔀 Случайная перестановка (π₁, π₂)</span>
         </button>
 
-        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-slate-700">
+        <button id="btn-solve-opt" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>★ Оптимум (Беллман — Джонсон)</span>
+        </button>
+
+        <button id="btn-solve-anti" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>⚡ Антиоптимум (Разворот)</span>
+        </button>
+
+        <button id="btn-solve" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition">
+          <span>▶ Рассчитать по заданным π₁, π₂</span>
+        </button>
+
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-slate-700 ml-auto">
           <input id="chk-shift-right" type="checkbox" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300" />
-          <span>Сдвинуть вторые операции вправо (консолидировать окно простоя слева)</span>
+          <span>Сдвинуть вторые операции вправо (окно простоя слева)</span>
         </label>
       </div>
     </section>
@@ -148,7 +246,165 @@
       4: { main: "#8b5cf6", tail: "#c4b5fd", label: "Тип 4 (только M2)" }
     };
 
+    const METHOD_FORMULAS = {
+      1: "Метод 1:  op₁ = round(U[20, 1000]),  op₂ = round(U[20, 1000]) — две независимые случайные целые величины (параметры β и α не используются).",
+      2: "Метод 2:  lower ~ U[20, 1000],  upper ~ U[lower + β·(1000 − lower), 1000],  op = round(U[lower, upper]).",
+      3: "Метод 3:  lower ~ U[20, 1000],  upper ~ U[min(lower + 100·β, 1000), min(lower + 100, 1000)],  op = round(U[lower, upper]).",
+      4: "Метод 4:  lower ~ U[20, 1000],  upper ~ U[min(lower + β·lower·(α − 1), 1000), min(α·lower, 1000)],  op = round(U[lower, upper])."
+    };
+
     let lastResult = null;
+    let lastSeed = 0;
+    let lastEditedN = "n1";
+
+    // =========================================================================
+    // Точная реализация 64-битного Вихря Мерсенна (std::mt19937_64)
+    // =========================================================================
+    class MT19937_64 {
+      constructor(seed) {
+        this.NN = 312;
+        this.MM = 156;
+        this.MATRIX_A = 0xB5026F5AA96619E9n;
+        this.UM = 0xFFFFFFFF80000000n;
+        this.LM = 0x7FFFFFFFn;
+        this.MASK64 = 0xFFFFFFFFFFFFFFFFn;
+        this.mt = new Array(this.NN).fill(0n);
+        this.mti = this.NN + 1;
+        this.init(BigInt(seed));
+      }
+
+      init(seed) {
+        this.mt[0] = seed & this.MASK64;
+        for (this.mti = 1; this.mti < this.NN; this.mti++) {
+          const prev = this.mt[this.mti - 1];
+          this.mt[this.mti] = (6364136223846793005n * (prev ^ (prev >> 62n)) + BigInt(this.mti)) & this.MASK64;
+        }
+      }
+
+      nextUint64() {
+        const mag01 = [0n, this.MATRIX_A];
+        if (this.mti >= this.NN) {
+          let i;
+          for (i = 0; i < this.NN - this.MM; i++) {
+            const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
+            this.mt[i] = this.mt[i + this.MM] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+          }
+          for (; i < this.NN - 1; i++) {
+            const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
+            this.mt[i] = this.mt[i + (this.MM - this.NN)] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+          }
+          const x = (this.mt[this.NN - 1] & this.UM) | (this.mt[0] & this.LM);
+          this.mt[this.NN - 1] = this.mt[this.MM - 1] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+          this.mti = 0;
+        }
+
+        let x = this.mt[this.mti++];
+        x ^= (x >> 29n) & 0x5555555555555555n;
+        x ^= (x << 17n) & 0x71D67FFFEDA60000n;
+        x ^= (x << 37n) & 0xFFF7EEE000000000n;
+        x ^= (x >> 43n);
+        return x & this.MASK64;
+      }
+
+      // Равномерное распределение [0.0, 1.0) с 53-битной точностью double
+      nextDouble() {
+        return Number(this.nextUint64() >> 11n) * (1.0 / 9007199254740992.0);
+      }
+
+      sample(minV, maxV) {
+        return minV + this.nextDouble() * (maxV - minV);
+      }
+    }
+
+    // 1. Генератор интервалов и положительных целых длительностей (4 метода)
+    function generateDuration(rng, method, beta, alpha) {
+      if (method === 1) {
+        return Math.max(1, Math.round(rng.sample(20.0, 1000.0)));
+      }
+      const lower = rng.sample(20.0, 1000.0);
+      let upper = 1000.0;
+      if (method === 2) {
+        upper = rng.sample(lower + beta * (1000.0 - lower), 1000.0);
+      } else if (method === 3) {
+        upper = rng.sample(Math.min(lower + 100.0 * beta, 1000.0), Math.min(lower + 100.0, 1000.0));
+      } else if (method === 4) {
+        upper = rng.sample(
+          Math.min(lower + beta * lower * (alpha - 1.0), 1000.0),
+          Math.min(alpha * lower, 1000.0)
+        );
+      }
+      return Math.max(1, Math.round(rng.sample(lower, upper)));
+    }
+
+    function generateJob(rng, id, method, beta = 0.3, alpha = 1.5) {
+      return {
+        id,
+        firstStage: generateDuration(rng, method, beta, alpha),
+        secondStage: generateDuration(rng, method, beta, alpha)
+      };
+    }
+
+    // Случайная перестановка (1..n) через Вихрь Мерсенна (алгоритм Фишера — Йетса)
+    function buildRandomPermOneBased(n, rng) {
+      const perm = Array.from({ length: n }, (_, idx) => idx + 1);
+      for (let i = n; i > 1; i--) {
+        const j = Number(rng.nextUint64() % BigInt(i));
+        const tmp = perm[i - 1];
+        perm[i - 1] = perm[j];
+        perm[j] = tmp;
+      }
+      return perm;
+    }
+
+    // 2. Поиск оптимума (Алгоритм Беллмана — Джонсона)
+    function buildOptimal(jobs) {
+      const group1 = [];
+      const group2 = [];
+      for (const j of jobs) {
+        if (j.firstStage <= j.secondStage) group1.push(j);
+        else group2.push(j);
+      }
+      group1.sort((l, r) => {
+        if (l.firstStage !== r.firstStage) return l.firstStage - r.firstStage;
+        if (l.secondStage !== r.secondStage) return r.secondStage - l.secondStage;
+        return l.id - r.id;
+      });
+      group2.sort((l, r) => {
+        if (l.secondStage !== r.secondStage) return r.secondStage - l.secondStage;
+        if (l.firstStage !== r.firstStage) return l.firstStage - r.firstStage;
+        return l.id - r.id;
+      });
+      return [...group1, ...group2];
+    }
+
+    // 3. Поиск антиоптимума (Зеркальный разворот оптимальной перестановки)
+    function buildAntiOptimal(jobs) {
+      return buildOptimal(jobs).reverse();
+    }
+
+    // 4. Расчет C_max по тождеству C_max = max(L1, L2, F1, F2)
+    function calcF(orderedJobs) {
+      let t1 = 0;
+      let t2 = 0;
+      for (const j of orderedJobs) {
+        t1 += j.firstStage;
+        t2 = Math.max(t1, t2) + j.secondStage;
+      }
+      return t2;
+    }
+
+    function calcCmaxIdentity(p1, p2, t3 = [], t4 = []) {
+      let sumA = 0, sumB = 0, sumC = 0, sumD = 0, sumP = 0, sumQ = 0;
+      for (const j of p1) { sumA += j.firstStage; sumB += j.secondStage; }
+      for (const j of p2) { sumC += j.firstStage; sumD += j.secondStage; }
+      for (const p of t3) sumP += p;
+      for (const q of t4) sumQ += q;
+      const L1 = sumA + sumP + sumD;
+      const L2 = sumB + sumQ + sumC;
+      const F1 = calcF(p1);
+      const F2 = calcF(p2);
+      return Math.max(L1, L2, F1, F2);
+    }
 
     function showError(msg) {
       const banner = document.getElementById("error-banner");
@@ -162,12 +418,11 @@
     }
 
     function fmtNum(val) {
-      return Number(val.toFixed(4)).toString();
+      return Math.round(val).toString();
     }
 
-    // Точный порт C++ ядра (solver.cpp)
     function appendInitialBlocks(machineId, twoStageType, twoStageJobs, permutation, singleStageType, singleStageDurations, ganttBlocks) {
-      let currentTime = 0.0;
+      let currentTime = 0;
       for (const jobIndex of permutation) {
         const duration = twoStageJobs[jobIndex].firstStage;
         const displayNumber = jobIndex + 1;
@@ -196,9 +451,9 @@
     }
 
     function evaluateConveyorTail(machineId, jobType, initialBlockLoad, jobs, permutation, ganttBlocks) {
-      let prevMachineReadyTime = 0.0;
+      let prevMachineReadyTime = 0;
       let currMachineFreeTime = initialBlockLoad;
-      let tailWorkDuration = 0.0;
+      let tailWorkDuration = 0;
 
       for (const jobIndex of permutation) {
         prevMachineReadyTime += jobs[jobIndex].firstStage;
@@ -221,14 +476,14 @@
 
       const totalWorkTime = initialBlockLoad + tailWorkDuration;
       const completionTime = currMachineFreeTime;
-      const internalIdleTime = completionTime - totalWorkTime;
+      const internalIdleTime = Math.max(0, completionTime - totalWorkTime);
 
       return {
         initialBlockLoad,
         totalWorkTime,
         completionTime,
         internalIdleTime,
-        totalIdleTime: 0.0
+        totalIdleTime: 0
       };
     }
 
@@ -251,44 +506,58 @@
       );
 
       const makespan = Math.max(m1Metrics.completionTime, m2Metrics.completionTime);
-      m1Metrics.totalIdleTime = makespan - m1Metrics.totalWorkTime;
-      m2Metrics.totalIdleTime = makespan - m2Metrics.totalWorkTime;
+      m1Metrics.totalIdleTime = Math.max(0, makespan - m1Metrics.totalWorkTime);
+      m2Metrics.totalIdleTime = Math.max(0, makespan - m2Metrics.totalWorkTime);
+
+      const optP1 = buildOptimal(input.type1Jobs);
+      const optP2 = buildOptimal(input.type2Jobs);
+      const optCmax = calcCmaxIdentity(optP1, optP2, input.type3Durations, input.type4Durations);
+
+      const antiP1 = buildAntiOptimal(input.type1Jobs);
+      const antiP2 = buildAntiOptimal(input.type2Jobs);
+      const antiCmax = calcCmaxIdentity(antiP1, antiP2, input.type3Durations, input.type4Durations);
 
       return {
         cMax: makespan,
+        optCmax,
+        antiCmax,
         m1: [m1Metrics.initialBlockLoad, m1Metrics.totalWorkTime, m1Metrics.completionTime, m1Metrics.internalIdleTime, m1Metrics.totalIdleTime],
         m2: [m2Metrics.initialBlockLoad, m2Metrics.totalWorkTime, m2Metrics.completionTime, m2Metrics.internalIdleTime, m2Metrics.totalIdleTime],
         blocks: ganttBlocks
       };
     }
 
+    function parsePosInt(str, context) {
+      if (!/^\d+$/.test(str)) {
+        throw new Error(`Все длительности должны быть положительными целыми числами (≥ 1). Ошибка в ${context}: '${str}'.`);
+      }
+      const val = parseInt(str, 10);
+      if (val < 1) {
+        throw new Error(`Длительность операции должна быть положительным целым числом (≥ 1), получено: ${val}.`);
+      }
+      return val;
+    }
+
     function parseTwoStage(text) {
       if (!text.trim()) return [];
       const jobs = [];
-      for (const pair of text.split(",")) {
+      const pairs = text.split(",");
+      for (let idx = 0; idx < pairs.length; idx++) {
+        const pair = pairs[idx];
         const parts = pair.trim().split(/\s+/).filter(Boolean);
         if (parts.length !== 2) {
-          throw new Error(`Ожидалась пара чисел (op1 op2), получено: '${pair.trim()}'`);
+          throw new Error(`Ожидалась пара положительных целых чисел (op1 op2), получено: '${pair.trim()}'`);
         }
-        const a = Number(parts[0]);
-        const b = Number(parts[1]);
-        if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
-          throw new Error(`Некорректные длительности в паре: '${pair.trim()}'`);
-        }
-        jobs.push({ firstStage: a, secondStage: b });
+        const a = parsePosInt(parts[0], `паре '${pair.trim()}'`);
+        const b = parsePosInt(parts[1], `паре '${pair.trim()}'`);
+        jobs.push({ id: idx + 1, firstStage: a, secondStage: b });
       }
       return jobs;
     }
 
-    function parseFloats(text) {
+    function parsePosIntList(text, context) {
       if (!text.trim()) return [];
-      return text.trim().split(/\s+/).map((x) => {
-        const v = Number(x);
-        if (Number.isNaN(v) || v < 0) {
-          throw new Error(`Некорректное число: '${x}'`);
-        }
-        return v;
-      });
+      return text.trim().split(/\s+/).filter(Boolean).map((x) => parsePosInt(x, context));
     }
 
     function parsePermutation(text, n, name) {
@@ -316,15 +585,153 @@
       return [...head, ...tail];
     }
 
-    function solveAndDraw() {
+    // Автоматический расчет соотношения n = n1 + n2
+    function resolveNCounts() {
+      const elN = document.getElementById("gen-n-total");
+      const elN1 = document.getElementById("gen-n1");
+      const elN2 = document.getElementById("gen-n2");
+
+      const sN = elN.value.trim();
+      const sN1 = elN1.value.trim();
+      const sN2 = elN2.value.trim();
+
+      let n = sN !== "" ? parseInt(sN, 10) : null;
+      let n1 = sN1 !== "" ? parseInt(sN1, 10) : null;
+      let n2 = sN2 !== "" ? parseInt(sN2, 10) : null;
+
+      if ((n !== null && (Number.isNaN(n) || n < 0)) ||
+          (n1 !== null && (Number.isNaN(n1) || n1 < 0)) ||
+          (n2 !== null && (Number.isNaN(n2) || n2 < 0))) {
+        throw new Error("Количества требований n, n₁, n₂ должны быть неотрицательными целыми числами.");
+      }
+
+      if (n !== null && n1 !== null && n2 === null) {
+        if (n1 > n) throw new Error(`n₁ (${n1}) не может быть больше общего количества требований n (${n}).`);
+        n2 = n - n1;
+      } else if (n !== null && n2 !== null && n1 === null) {
+        if (n2 > n) throw new Error(`n₂ (${n2}) не может быть больше общего количества требований n (${n}).`);
+        n1 = n - n2;
+      } else if (n === null && n1 !== null && n2 !== null) {
+        n = n1 + n2;
+      } else if (n === null && n1 !== null && n2 === null) {
+        n = n1;
+        n2 = 0;
+      } else if (n === null && n2 !== null && n1 === null) {
+        n = n2;
+        n1 = 0;
+      } else if (n !== null && n1 === null && n2 === null) {
+        n1 = Math.ceil(n / 2);
+        n2 = n - n1;
+      } else if (n !== null && n1 !== null && n2 !== null) {
+        if (n1 + n2 !== n) {
+          if (lastEditedN === "n1" && n1 <= n) {
+            n2 = n - n1;
+          } else if (lastEditedN === "n2" && n2 <= n) {
+            n1 = n - n2;
+          } else {
+            throw new Error(`Сумма n₁ (${n1}) + n₂ (${n2}) должна равняться n (${n}). Оставьте одно из полей n₁ или n₂ пустым для авторасчёта.`);
+          }
+        }
+      } else {
+        throw new Error("Укажите количество требований n, n₁ или n₂.");
+      }
+
+      elN.value = String(n);
+      elN1.value = String(n1);
+      elN2.value = String(n2);
+      return { n, n1, n2 };
+    }
+
+    function updateMethodFormulaNote() {
+      const m = parseInt(document.getElementById("gen-method").value || "1", 10);
+      document.getElementById("method-formula-note").textContent = METHOD_FORMULAS[m] || "";
+    }
+
+    function generateWithMersenneTwister() {
+      hideError();
+      try {
+        const { n1, n2 } = resolveNCounts();
+        const n3 = parseInt(document.getElementById("gen-n3").value || "0", 10);
+        const n4 = parseInt(document.getElementById("gen-n4").value || "0", 10);
+        const method = parseInt(document.getElementById("gen-method").value || "1", 10);
+        const beta = parseFloat(document.getElementById("gen-beta").value || "0.3");
+        const alpha = parseFloat(document.getElementById("gen-alpha").value || "1.5");
+        let seedInput = parseInt(document.getElementById("gen-seed").value || "0", 10);
+
+        if (n3 < 0 || n4 < 0 || (n1 + n2 + n3 + n4 === 0)) {
+          throw new Error("Общее количество работ должно быть больше нуля.");
+        }
+
+        if (!seedInput || seedInput <= 0) {
+          seedInput = Math.floor(Math.random() * 4294967295) + 1;
+        }
+        lastSeed = seedInput;
+        document.getElementById("seed-badge").textContent = `mt19937_64 Seed: ${lastSeed}`;
+
+        const rng = new MT19937_64(lastSeed);
+        const t1 = [];
+        const t2 = [];
+        const t3 = [];
+        const t4 = [];
+
+        for (let i = 0; i < n1; i++) t1.push(generateJob(rng, i + 1, method, beta, alpha));
+        for (let i = 0; i < n2; i++) t2.push(generateJob(rng, i + 1, method, beta, alpha));
+        for (let i = 0; i < n3; i++) t3.push(generateDuration(rng, method, beta, alpha));
+        for (let i = 0; i < n4; i++) t4.push(generateDuration(rng, method, beta, alpha));
+
+        // При генерации подставляется СЛУЧАЙНАЯ перестановка через Вихрь Мерсенна
+        const randPi1 = buildRandomPermOneBased(n1, rng);
+        const randPi2 = buildRandomPermOneBased(n2, rng);
+
+        document.getElementById("ent-t1").value = t1.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
+        document.getElementById("ent-pi1").value = randPi1.join(" ");
+        document.getElementById("ent-t2").value = t2.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
+        document.getElementById("ent-pi2").value = randPi2.join(" ");
+        document.getElementById("ent-t3").value = t3.join(" ");
+        document.getElementById("ent-t4").value = t4.join(" ");
+
+        solveAndDraw("MANUAL");
+      } catch (err) {
+        showError(err.message || String(err));
+      }
+    }
+
+    function solveAndDraw(mode = "MANUAL") {
       hideError();
       try {
         const t1 = parseTwoStage(document.getElementById("ent-t1").value);
-        const pi1 = parsePermutation(document.getElementById("ent-pi1").value, t1.length, "π₁");
         const t2 = parseTwoStage(document.getElementById("ent-t2").value);
-        const pi2 = parsePermutation(document.getElementById("ent-pi2").value, t2.length, "π₂");
-        const t3 = parseFloats(document.getElementById("ent-t3").value);
-        const t4 = parseFloats(document.getElementById("ent-t4").value);
+        const t3 = parsePosIntList(document.getElementById("ent-t3").value, "Типе 3");
+        const t4 = parsePosIntList(document.getElementById("ent-t4").value, "Типе 4");
+
+        let pi1, pi2;
+        if (mode === "OPT") {
+          const opt1 = buildOptimal(t1).map((j) => j.id);
+          const opt2 = buildOptimal(t2).map((j) => j.id);
+          document.getElementById("ent-pi1").value = opt1.join(" ");
+          document.getElementById("ent-pi2").value = opt2.join(" ");
+          pi1 = opt1.map((x) => x - 1);
+          pi2 = opt2.map((x) => x - 1);
+        } else if (mode === "ANTI") {
+          const anti1 = buildAntiOptimal(t1).map((j) => j.id);
+          const anti2 = buildAntiOptimal(t2).map((j) => j.id);
+          document.getElementById("ent-pi1").value = anti1.join(" ");
+          document.getElementById("ent-pi2").value = anti2.join(" ");
+          pi1 = anti1.map((x) => x - 1);
+          pi2 = anti2.map((x) => x - 1);
+        } else if (mode === "RANDOM") {
+          const randSeed = Math.floor(Math.random() * 4294967295) + 1;
+          const rng = new MT19937_64(randSeed);
+          const r1 = buildRandomPermOneBased(t1.length, rng);
+          const r2 = buildRandomPermOneBased(t2.length, rng);
+          document.getElementById("ent-pi1").value = r1.join(" ");
+          document.getElementById("ent-pi2").value = r2.join(" ");
+          pi1 = r1.map((x) => x - 1);
+          pi2 = r2.map((x) => x - 1);
+        } else {
+          pi1 = parsePermutation(document.getElementById("ent-pi1").value, t1.length, "π₁");
+          pi2 = parsePermutation(document.getElementById("ent-pi2").value, t2.length, "π₂");
+        }
 
         lastResult = calculateSchedule({
           type1Jobs: t1,
@@ -344,11 +751,13 @@
       if (!lastResult) return;
       const res = lastResult;
       const cMax = res.cMax;
+      const optCmax = res.optCmax;
+      const antiCmax = res.antiCmax;
       const m1 = res.m1;
       const m2 = res.m2;
 
       document.getElementById("stats-label").textContent =
-        `ОБЩЕЕ ВРЕМЯ ЗАВЕРШЕНИЯ (C_max): ${fmtNum(cMax)}\n` +
+        `ТЕКУЩЕЕ C_max: ${fmtNum(cMax)}  |  Оптимальное C_max (Беллман — Джонсон): ${fmtNum(optCmax)}  |  Антиоптимальное C_max (Разворот): ${fmtNum(antiCmax)}\n` +
         `Прибор 1 (M1):  Стартовый блок T₁ = ${fmtNum(m1[0])}  |  Полезная работа = ${fmtNum(m1[1])}  |  Завершение C¹ = ${fmtNum(m1[2])}  |  Внутр. простой = ${fmtNum(m1[3])}  |  Полный простой = ${fmtNum(m1[4])}\n` +
         `Прибор 2 (M2):  Стартовый блок T₂ = ${fmtNum(m2[0])}  |  Полезная работа = ${fmtNum(m2[1])}  |  Завершение C² = ${fmtNum(m2[2])}  |  Внутр. простой = ${fmtNum(m2[3])}  |  Полный простой = ${fmtNum(m2[4])}`;
 
@@ -367,7 +776,7 @@
       const leftPad = 130;
       const rightPad = 50;
       const usableW = w - leftPad - rightPad;
-      const scale = usableW / Math.max(cMax, 1.0);
+      const scale = usableW / Math.max(cMax, 1);
 
       const shiftRight = document.getElementById("chk-shift-right").checked;
       const bM1 = shiftRight
@@ -382,7 +791,13 @@
       const barH = 56;
 
       // Сетка времени
-      const step = cMax <= 20 ? 1 : (cMax <= 50 ? 2 : 5);
+      let step = 1;
+      if (cMax > 5000) step = 500;
+      else if (cMax > 1000) step = 250;
+      else if (cMax > 200) step = 50;
+      else if (cMax > 50) step = 10;
+      else if (cMax > 20) step = 2;
+
       ctx.save();
       ctx.strokeStyle = "#e2e8f0";
       ctx.fillStyle = "#64748b";
@@ -453,14 +868,14 @@
       ctx.strokeRect(leftPad, y, cMax * scale, h);
 
       // Интервалы простоя
-      let cursor = 0.0;
+      let cursor = 0;
       for (const b of blocks) {
-        if (b.start > cursor + 1e-6) {
+        if (b.start > cursor) {
           drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + b.start * scale, y + h, b.start - cursor, "Окно простоя");
         }
         cursor = b.end;
       }
-      if (cMax > cursor + 1e-6) {
+      if (cMax > cursor) {
         drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + cMax * scale, y + h, cMax - cursor, "Простой");
       }
 
@@ -487,7 +902,7 @@
         const opName = opMap[`${b.machine}_${b.type}`];
         const dur = b.end - b.start;
 
-        if (x2 - x1 > 26) {
+        if (x2 - x1 > 28) {
           ctx.fillStyle = textCol;
           ctx.textAlign = "center";
           ctx.font = "bold 12px Inter, sans-serif";
@@ -496,10 +911,12 @@
           ctx.fillText(`(${fmtNum(dur)})`, (x1 + x2) / 2, y + h / 2 + 9);
         }
 
-        ctx.fillStyle = "#334155";
-        ctx.textAlign = "center";
-        ctx.font = "11px Inter, sans-serif";
-        ctx.fillText(fmtNum(b.end), x2, y + h + 12);
+        if (x2 - x1 > 18) {
+          ctx.fillStyle = "#334155";
+          ctx.textAlign = "center";
+          ctx.font = "11px Inter, sans-serif";
+          ctx.fillText(fmtNum(b.end), x2, y + h + 12);
+        }
       }
 
       // Рубеж T1 / T2
@@ -521,7 +938,7 @@
       ctx.restore();
     }
 
-    function setEntries(t1, pi1, t2, pi2, t3, t4, shiftRight) {
+    function setEntries(t1, pi1, t2, pi2, t3, t4, shiftRight, mode = "MANUAL") {
       document.getElementById("ent-t1").value = t1;
       document.getElementById("ent-pi1").value = pi1;
       document.getElementById("ent-t2").value = t2;
@@ -529,24 +946,32 @@
       document.getElementById("ent-t3").value = t3;
       document.getElementById("ent-t4").value = t4;
       document.getElementById("chk-shift-right").checked = shiftRight;
-      solveAndDraw();
+      solveAndDraw(mode);
     }
 
     function loadPreset1() {
-      setEntries("3 6, 5 2, 4 5", "1 2 3", "4 5, 8 3, 2 6", "1 2 3", "3 2", "4", false);
+      setEntries("3 6, 5 2, 4 5", "1 2 3", "4 5, 8 3, 2 6", "1 2 3", "3 2", "4", false, "MANUAL");
     }
 
     function loadPreset2() {
-      setEntries("4 3, 6 2, 5 4", "1 2 3", "", "", "", "", true);
+      setEntries("4 3, 6 2, 5 4", "1 3 2", "", "", "", "", true, "OPT");
     }
 
     window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btn-preset-1").addEventListener("click", loadPreset1);
       document.getElementById("btn-preset-2").addEventListener("click", loadPreset2);
-      document.getElementById("btn-solve").addEventListener("click", solveAndDraw);
-      document.getElementById("chk-shift-right").addEventListener("change", solveAndDraw);
+      document.getElementById("btn-generate").addEventListener("click", generateWithMersenneTwister);
+      document.getElementById("btn-solve-random").addEventListener("click", () => solveAndDraw("RANDOM"));
+      document.getElementById("btn-solve-opt").addEventListener("click", () => solveAndDraw("OPT"));
+      document.getElementById("btn-solve-anti").addEventListener("click", () => solveAndDraw("ANTI"));
+      document.getElementById("btn-solve").addEventListener("click", () => solveAndDraw("MANUAL"));
+      document.getElementById("chk-shift-right").addEventListener("change", redrawCached);
       document.getElementById("btn-close-error").addEventListener("click", hideError);
+      document.getElementById("gen-method").addEventListener("change", updateMethodFormulaNote);
+      document.getElementById("gen-n1").addEventListener("input", () => { lastEditedN = "n1"; });
+      document.getElementById("gen-n2").addEventListener("input", () => { lastEditedN = "n2"; });
       window.addEventListener("resize", redrawCached);
+      updateMethodFormulaNote();
       loadPreset1();
     });
   </script>
