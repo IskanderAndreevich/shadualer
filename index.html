@@ -3,977 +3,2223 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Расписание Джексона (J2 || C_max) — Вихрь Мерсенна (mt19937_64), Оптимум/Антиоптимум & Диаграмма Гантта</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>Задача Джексона (J2 || C_max) — Генератор (mt19937_64), Файлы и Диаграмма Гантта</title>
   <style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-header: #1e293b;
+      --bg-muted: #f1f5f9;
+      --bg-stats: #e2e8f0;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --teal: #0d9488;
+      --teal-hover: #0f766e;
+      --emerald: #059669;
+      --emerald-hover: #047857;
+      --purple: #7c3aed;
+      --purple-hover: #6d28d9;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --radius: 10px;
+      --radius-sm: 7px;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, Menlo, monospace;
     }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+
     .mono {
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: var(--font-mono);
+    }
+
+    /* Header */
+    .app-header {
+      background-color: var(--bg-header);
+      color: #ffffff;
+      padding: 12px 18px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-subtitle {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Layout */
+    .app-main {
+      flex: 1;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #334155;
+    }
+
+    /* Alert Banner */
+    .error-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background-color: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      font-size: 13px;
+    }
+
+    .error-banner.hidden {
+      display: none;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: #991b1b;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    /* Form Controls */
+    .gen-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .col-1 { grid-column: span 1; }
+    .col-2 { grid-column: span 2; }
+
+    .io-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 6px 9px;
+      font-size: 13px;
+      color: var(--text-main);
+      background-color: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+    }
+
+    select:disabled {
+      opacity: 0.55;
+      background-color: var(--bg-muted);
+      cursor: not-allowed;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .btn-dark {
+      background-color: #334155;
+      color: #ffffff;
+    }
+    .btn-dark:hover { background-color: #475569; }
+
+    .btn-secondary {
+      background-color: var(--bg-muted);
+      border-color: var(--border);
+      color: #1e293b;
+    }
+    .btn-secondary:hover { background-color: #e2e8f0; }
+
+    .btn-clear {
+      background-color: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+    .btn-clear:hover { background-color: #ffe4e6; }
+
+    .btn-teal { background-color: var(--teal); color: #ffffff; }
+    .btn-teal:hover { background-color: var(--teal-hover); }
+
+    .btn-primary { background-color: var(--primary); color: #ffffff; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+
+    .btn-emerald { background-color: var(--emerald); color: #ffffff; }
+    .btn-emerald:hover { background-color: var(--emerald-hover); }
+
+    .btn-purple { background-color: var(--purple); color: #ffffff; }
+    .btn-purple:hover { background-color: var(--purple-hover); }
+
+    .btn-danger { background-color: var(--danger); color: #ffffff; }
+    .btn-danger:hover { background-color: var(--danger-hover); }
+
+    /* Badges & Formula Note */
+    .badge-seed {
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background-color: #f0fdfa;
+      border: 1px solid #99f6e4;
+      color: #115e59;
+    }
+
+    .gen-footer {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .seed-formula-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .inline-seed {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inline-seed label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .inline-seed input {
+      width: 130px;
+    }
+
+    .formula-note {
+      flex: 1;
+      min-width: 240px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background-color: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      font-size: 12px;
+    }
+
+    /* Collapsible Help */
+    .help-details {
+      margin-top: 10px;
+      border-radius: var(--radius-sm);
+      background-color: var(--bg-muted);
+      border: 1px solid var(--border-light);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    .help-details > summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #1e293b;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .help-details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .help-body {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .help-body ol {
+      margin: 4px 0 0 18px;
+      padding: 0;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group {
+      margin-left: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Metrics Panel */
+    .stats-panel {
+      background-color: var(--bg-stats);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+    }
+
+    .stats-pre {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: var(--text-main);
+    }
+
+    /* Gantt Card */
+    .gantt-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 340px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 295px;
+    }
+
+    #gantt-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 20;
+      pointer-events: none;
+      background-color: rgba(15, 23, 42, 0.95);
+      color: #ffffff;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+      white-space: nowrap;
+    }
+
+    .tooltip.hidden {
+      display: none;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    /* Color accents for field hints */
+    .c-t1 { color: #1d4ed8; }
+    .c-t2 { color: #047857; }
+    .c-t3 { color: #b45309; }
+    .c-t4 { color: #6d28d9; }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .gen-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+      .col-1 { grid-column: span 1; }
+      .col-2 { grid-column: span 2; }
+    }
+
+    @media (max-width: 720px) {
+      .gen-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .col-1 { grid-column: span 1; }
+      .col-2 { grid-column: span 2; }
+      .io-grid {
+        grid-template-columns: 1fr;
+      }
+      .checkbox-group {
+        margin-left: 0;
+      }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-  <!-- Верхняя панель -->
-  <header class="bg-slate-800 text-white px-4 py-3 shadow-md">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 font-bold text-sm">J2</span>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-badge">J2</span>
         <div>
-          <h1 class="text-base sm:text-lg font-bold tracking-tight">Задача Джексона (J2 || C_max) — Положительные целые числа & Вихрь Мерсенна (mt19937_64)</h1>
-          <p class="text-xs text-slate-300">Генерация по 4 методам со случайной перестановкой, поиск оптимума и антиоптимума, диаграмма Гантта</p>
+          <h1 class="brand-title">Задача Джексона (J2 || C_max) — Вихрь Мерсенна (mt19937_64)</h1>
+          <p class="brand-subtitle">Генератор детерминированных и интервальных примеров, работа с .txt, диаграмма Гантта</p>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="btn-preset-1" type="button" class="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm font-medium transition">
-          Пример 1: Все 4 типа
-        </button>
-        <button id="btn-preset-2" type="button" class="px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm font-medium transition">
-          Пример 2: Конвейер (Окно слева)
-        </button>
+      <div class="header-actions">
+        <button id="btn-preset-1" type="button" class="btn btn-sm btn-dark">Пример 1: Все 4 типа</button>
+        <button id="btn-preset-2" type="button" class="btn btn-sm btn-dark">Пример 2: Конвейер</button>
       </div>
     </div>
   </header>
 
-  <!-- Основной контент -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-4 flex flex-col gap-4">
-    <!-- Уведомление об ошибке -->
-    <div id="error-banner" class="hidden rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800 flex items-center justify-between">
+  <main class="app-main">
+    <div id="error-banner" class="error-banner hidden" role="alert">
       <span id="error-message"></span>
-      <button id="btn-close-error" type="button" class="text-red-600 hover:text-red-900 font-semibold ml-4">✕</button>
+      <button id="btn-close-error" type="button" class="btn-close" aria-label="Закрыть">✕</button>
     </div>
 
-    <!-- 1. Генератор интервалов и длительностей (Вихрь Мерсенна mt19937_64) -->
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">
-          1. Генератор интервалов и длительностей (Вихрь Мерсенна <code class="mono text-teal-700">mt19937_64</code>, целые числа ≥ 1)
+    <!-- 1. Генератор примеров -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="section-title">
+          1. Генератор примеров (<span class="mono">mt19937_64</span>, целые числа ≥ 1)
         </h2>
-        <span id="seed-badge" class="mono text-xs bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-md">
-          Генератор: 64-bit Mersenne Twister (mt19937_64)
-        </span>
+        <span id="seed-badge" class="badge-seed mono">mt19937_64</span>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 items-end">
-        <div>
-          <label for="gen-n-total" class="block text-xs font-semibold text-slate-700 mb-1">n (общее = n₁+n₂):</label>
-          <input id="gen-n-total" type="number" min="0" max="100" value="6" placeholder="n₁+n₂" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+      <div class="gen-grid">
+        <div class="field col-1">
+          <label for="gen-n-total">n (n₁+n₂):</label>
+          <input id="gen-n-total" type="number" min="0" max="500" value="6" class="mono" />
         </div>
-        <div>
-          <label for="gen-n1" class="block text-xs font-medium text-slate-600 mb-1">n₁ (Тип 1, авто):</label>
-          <input id="gen-n1" type="number" min="0" max="100" value="5" placeholder="авто (n−n₂)" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <div class="field col-1">
+          <label for="gen-n1">n₁ (Тип 1):</label>
+          <input id="gen-n1" type="number" min="0" max="500" value="5" class="mono" />
         </div>
-        <div>
-          <label for="gen-n2" class="block text-xs font-medium text-slate-600 mb-1">n₂ (Тип 2, авто):</label>
-          <input id="gen-n2" type="number" min="0" max="100" value="1" placeholder="авто (n−n₁)" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <div class="field col-1">
+          <label for="gen-n2">n₂ (Тип 2):</label>
+          <input id="gen-n2" type="number" min="0" max="500" value="1" class="mono" />
         </div>
-        <div>
-          <label for="gen-n3" class="block text-xs font-medium text-slate-600 mb-1">n₃ (Тип 3):</label>
-          <input id="gen-n3" type="number" min="0" max="100" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <div class="field col-1">
+          <label for="gen-n3">n₃ (Тип 3):</label>
+          <input id="gen-n3" type="number" min="0" max="500" value="0" class="mono" />
         </div>
-        <div>
-          <label for="gen-n4" class="block text-xs font-medium text-slate-600 mb-1">n₄ (Тип 4):</label>
-          <input id="gen-n4" type="number" min="0" max="100" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <div class="field col-1">
+          <label for="gen-n4">n₄ (Тип 4):</label>
+          <input id="gen-n4" type="number" min="0" max="500" value="0" class="mono" />
         </div>
-        <div class="col-span-2">
-          <label for="gen-method" class="block text-xs font-semibold text-slate-700 mb-1">Метод генерации (1..4):</label>
-          <select id="gen-method" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <option value="1">Метод 1: Независимые U[20, 1000]</option>
-            <option value="2">Метод 2: Зависимый предел (от β)</option>
-            <option value="3">Метод 3: Интервал ширины ≤ 100 (от β)</option>
-            <option value="4">Метод 4: Мультипликативный (от β, α)</option>
+
+        <div class="field col-2">
+          <label for="gen-det-mode">Режим длительности:</label>
+          <select id="gen-det-mode">
+            <option value="pairs">Простые пары чисел (детерм.)</option>
+            <option value="lower">Нижняя граница L (детерм.)</option>
+            <option value="upper">Верхняя граница U (детерм.)</option>
+            <option value="mid">Середина (L+U)/2 (детерм.)</option>
+            <option value="random" selected>Случайная точка в [L, U]</option>
           </select>
         </div>
-        <div>
-          <label for="gen-beta" class="block text-xs font-medium text-slate-600 mb-1">Параметр β:</label>
-          <input id="gen-beta" type="number" step="0.05" value="0.3" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+
+        <div class="field col-2">
+          <label for="gen-method">Метод интервалов (1..4):</label>
+          <select id="gen-method">
+            <option value="1">Метод 1: Независимые границы</option>
+            <option value="2">Метод 2: Зависимый предел (β)</option>
+            <option value="3">Метод 3: Ширина ≤ 100 (β)</option>
+            <option value="4">Метод 4: Мультипликативный (β, α)</option>
+          </select>
         </div>
-        <div>
-          <label for="gen-alpha" class="block text-xs font-medium text-slate-600 mb-1">Параметр α:</label>
-          <input id="gen-alpha" type="number" step="0.1" value="1.5" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+
+        <div class="field col-1">
+          <label for="gen-range">Диапазон:</label>
+          <select id="gen-range" class="mono">
+            <option value="20_1000" selected>[20, 1000]</option>
+            <option value="2_100">[2, 100]</option>
+          </select>
         </div>
-        <div>
-          <label for="gen-seed" class="block text-xs font-semibold text-slate-700 mb-1">Seed (0=случ.):</label>
-          <input id="gen-seed" type="number" min="0" value="0" class="mono w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
+
+        <div class="field col-1">
+          <label for="gen-beta">β:</label>
+          <input id="gen-beta" type="number" step="0.05" min="0" max="1" value="0.3" class="mono" />
+        </div>
+
+        <div class="field col-1">
+          <label for="gen-alpha">α:</label>
+          <input id="gen-alpha" type="number" step="0.1" min="1.05" value="1.5" class="mono" />
         </div>
       </div>
 
-      <!-- Пометка с формулой выбранного метода -->
-      <div class="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3.5 py-2 text-xs text-emerald-950">
-        <div class="font-semibold mb-0.5">Пометка по вычислению выбранного метода:</div>
-        <div id="method-formula-note" class="mono text-xs text-emerald-900">
-          Метод 1: op₁ = round(U[20, 1000]), op₂ = round(U[20, 1000]) — две независимые случайные целые величины (параметры β и α не используются).
+      <div class="gen-footer">
+        <div class="seed-formula-wrap">
+          <div class="inline-seed">
+            <label for="gen-seed">Seed (0 = случ.):</label>
+            <input id="gen-seed" type="text" inputmode="numeric" value="0" class="mono" />
+          </div>
+          <div id="method-formula-note" class="formula-note mono"></div>
         </div>
-      </div>
-
-      <!-- Пометка о Seed и авторасчете n = n1 + n2 -->
-      <div class="mt-2.5 rounded-lg bg-slate-100 border border-slate-200 px-3.5 py-2 text-xs text-slate-700 leading-relaxed">
-        <div>
-          <strong class="text-slate-900">Что такое Seed (зерно генератора) и на что он влияет:</strong>
-          <code class="mono">Seed</code> задаёт начальное внутреннее состояние 64-битного генератора псевдослучайных чисел Вихря Мерсенна (<code class="mono">mt19937_64</code>).
-          При одинаковом <code class="mono">Seed &gt; 0</code> (и тех же параметрах <code class="mono">n, n₁, n₂, методе, β, α</code>) генератор создаст <strong>100% идентичные длительности всех операций и ту же самую стартовую случайную перестановку</strong> (для воспроизводимости экспериментов). Если указать <code class="mono">Seed = 0</code>, зерно выбирается случайно при каждом нажатии.
-        </div>
-        <div class="mt-1">
-          <strong class="text-slate-900">Авторасчёт количества работ (<code class="mono">n = n₁ + n₂</code>):</strong>
-          можно задать общее число <code class="mono">n</code> и только <code class="mono">n₁</code> (или только <code class="mono">n₂</code>, оставив второе поле пустым) — второй параметр рассчитается автоматически как <code class="mono">n − n₁</code> (или <code class="mono">n − n₂</code>).
-        </div>
-      </div>
-
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p class="text-xs text-slate-500">
-          При генерации создаются положительные целые длительности из диапазона <code class="mono">[20, 1000]</code> и подставляется <strong>случайная перестановка</strong>.
-        </p>
-        <button id="btn-generate" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>🎲 Сгенерировать работы + случайную перестановку (mt19937_64)</span>
+        <button id="btn-generate" type="button" class="btn btn-teal">
+          Сгенерировать работы + перестановку
         </button>
+      </div>
+
+      <details class="help-details">
+        <summary>
+          <span>Справка: Seed, авторасчёт n = n₁ + n₂ и формат .txt файла</span>
+          <span style="color: var(--text-muted); font-weight: 500;">нажмите, чтобы развернуть</span>
+        </summary>
+        <div class="help-body">
+          <div>
+            <strong>Seed (зерно генератора):</strong> задаёт начальное состояние 64-битного Вихря Мерсенна (<span class="mono">mt19937_64</span>). При одинаковом <span class="mono">Seed &gt; 0</span> веб-версия, C++ ядро и Python-приложение генерируют идентичные данные. Значение <span class="mono">0</span> выбирает случайное зерно.
+          </div>
+          <div>
+            <strong>Авторасчёт <span class="mono">n = n₁ + n₂</span>:</strong> укажите общее <span class="mono">n</span> и одно из полей (<span class="mono">n₁</span> или <span class="mono">n₂</span>), оставив второе пустым — оно вычисляется автоматически.
+          </div>
+          <div>
+            <strong>Формат файла (.txt):</strong> логические блоки разделяются <strong>пустой строкой</strong> (без заголовков и комментариев). Пары длительностей допускается записывать в столбик или в строчку через пробел/запятую. Порядок блоков:
+            <ol class="mono">
+              <li>Требования Типа 1 (пары a_j b_j)</li>
+              <li>Перестановка π₁ (символ «-» подставит естественный порядок 1..n₁)</li>
+              <li>Требования Типа 2 (пары c_j d_j, или «-» при отсутствии)</li>
+              <li>Перестановка π₂</li>
+              <li>Требования Типа 3 (p_j) — необязательно</li>
+              <li>Требования Типа 4 (q_j) — необязательно</li>
+            </ol>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- 2. Входные данные и работа с файлами -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="section-title">2. Входные данные (длительности и перестановки)</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <input id="file-input" type="file" accept=".txt,text/plain" class="hidden-input" />
+          <button id="btn-load-txt" type="button" class="btn btn-sm btn-secondary">Загрузить из .txt</button>
+          <button id="btn-save-txt" type="button" class="btn btn-sm btn-secondary">Сохранить в .txt</button>
+          <button id="btn-clear-fields" type="button" class="btn btn-sm btn-clear">Очистить поля</button>
+        </div>
+      </div>
+
+      <div class="io-grid">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="field">
+            <label for="ent-t1">Тип 1 (M1 → M2, целые пары <span class="mono c-t1">a_j b_j</span> через запятую):</label>
+            <input id="ent-t1" type="text" class="mono" placeholder="3 6, 5 2, 4 5" />
+          </div>
+          <div class="field">
+            <label for="ent-pi1">Перестановка π₁ (номера с 1 через пробел):</label>
+            <input id="ent-pi1" type="text" class="mono" placeholder="1 2 3" />
+          </div>
+          <div class="field">
+            <label for="ent-t3">Тип 3 (целые <span class="mono c-t3">p_j</span> только на M1 через пробел):</label>
+            <input id="ent-t3" type="text" class="mono" placeholder="3 2" />
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="field">
+            <label for="ent-t2">Тип 2 (M2 → M1, целые пары <span class="mono c-t2">c_j d_j</span> через запятую):</label>
+            <input id="ent-t2" type="text" class="mono" placeholder="4 5, 8 3, 2 6" />
+          </div>
+          <div class="field">
+            <label for="ent-pi2">Перестановка π₂ (номера с 1 через пробел):</label>
+            <input id="ent-pi2" type="text" class="mono" placeholder="1 2 3" />
+          </div>
+          <div class="field">
+            <label for="ent-t4">Тип 4 (целые <span class="mono c-t4">q_j</span> только на M2 через пробел):</label>
+            <input id="ent-t4" type="text" class="mono" placeholder="4" />
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button id="btn-solve-random" type="button" class="btn btn-purple">Случайная (π₁, π₂)</button>
+        <button id="btn-solve-opt" type="button" class="btn btn-emerald">Оптимум (Беллман — Джонсон)</button>
+        <button id="btn-solve-anti" type="button" class="btn btn-danger">Антиоптимум (Разворот)</button>
+        <button id="btn-solve" type="button" class="btn btn-primary">Рассчитать по заданным π₁, π₂</button>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input id="chk-shift-right" type="checkbox" />
+            <span>Сдвиг вторых операций вправо</span>
+          </label>
+          <label class="checkbox-label" title="Скрывает внутренние границы между операциями одного типа при большом n">
+            <input id="chk-macro-view" type="checkbox" />
+            <span>Макро-вид</span>
+          </label>
+        </div>
       </div>
     </section>
 
-    <!-- 2. Панель ввода данных и выбора перестановки -->
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
-        2. Входные данные (положительные целые длительности и перестановки)
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-        <!-- Левая колонка -->
-        <div class="space-y-2.5">
-          <div>
-            <label for="ent-t1" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 1 (M1 → M2, целые пары <code class="mono text-blue-700">a_j b_j</code> через запятую):
-            </label>
-            <input id="ent-t1" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 6, 5 2, 4 5" />
-          </div>
-          <div>
-            <label for="ent-pi1" class="block text-xs font-medium text-slate-600 mb-1">
-              Перестановка π₁ (номера с 1 через пробел):
-            </label>
-            <input id="ent-pi1" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1 2 3" />
-          </div>
-          <div>
-            <label for="ent-t3" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 3 (целые <code class="mono text-amber-700">p_j</code> только на M1 через пробел):
-            </label>
-            <input id="ent-t3" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="3 2" />
-          </div>
-        </div>
-
-        <!-- Правая колонка -->
-        <div class="space-y-2.5">
-          <div>
-            <label for="ent-t2" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 2 (M2 → M1, целые пары <code class="mono text-emerald-700">c_j d_j</code> через запятую):
-            </label>
-            <input id="ent-t2" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4 5, 8 3, 2 6" />
-          </div>
-          <div>
-            <label for="ent-pi2" class="block text-xs font-medium text-slate-600 mb-1">
-              Перестановка π₂ (номера с 1 через пробел):
-            </label>
-            <input id="ent-pi2" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1 2 3" />
-          </div>
-          <div>
-            <label for="ent-t4" class="block text-xs font-medium text-slate-600 mb-1">
-              Требования Типа 4 (целые <code class="mono text-purple-700">q_j</code> только на M2 через пробел):
-            </label>
-            <input id="ent-t4" type="text" class="mono w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Кнопки управления и чекбокс -->
-      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
-        <button id="btn-solve-random" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>🔀 Случайная перестановка (π₁, π₂)</span>
-        </button>
-
-        <button id="btn-solve-opt" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>★ Оптимум (Беллман — Джонсон)</span>
-        </button>
-
-        <button id="btn-solve-anti" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>⚡ Антиоптимум (Разворот)</span>
-        </button>
-
-        <button id="btn-solve" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition">
-          <span>▶ Рассчитать по заданным π₁, π₂</span>
-        </button>
-
-        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-slate-700 ml-auto">
-          <input id="chk-shift-right" type="checkbox" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300" />
-          <span>Сдвинуть вторые операции вправо (окно простоя слева)</span>
-        </label>
-      </div>
+    <!-- 3. Панель метрик -->
+    <section class="stats-panel" aria-live="polite">
+      <pre id="stats-label" class="stats-pre mono"></pre>
     </section>
 
-    <!-- Панель метрик -->
-    <section class="bg-slate-200/80 border border-slate-300 rounded-xl px-4 py-3">
-      <pre id="stats-label" class="mono text-xs sm:text-sm text-slate-900 whitespace-pre-wrap leading-relaxed"></pre>
-    </section>
-
-    <!-- Диаграмма Гантта -->
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex-1 flex flex-col min-h-[340px]">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">
-          Диаграмма Гантта (Г. Гантт, 1903)
-        </h2>
-        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500 inline-block"></span>Тип 1 (M1 → M2)</span>
-          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>Тип 2 (M2 → M1)</span>
-          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span>Тип 3 (только M1)</span>
-          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-purple-500 inline-block"></span>Тип 4 (только M2)</span>
-          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-200 border border-red-400 inline-block"></span>Окно простоя</span>
+    <!-- 4. Диаграмма Гантта -->
+    <section class="card gantt-card">
+      <div class="card-header">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+          <h2 class="section-title">Диаграмма Гантта (Г. Гантт, 1903)</h2>
+          <button id="btn-export-png" type="button" class="btn btn-sm btn-secondary">Сохранить PNG</button>
+          <button id="btn-export-svg" type="button" class="btn btn-sm btn-secondary">Сохранить SVG</button>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch" style="background: #3b82f6;"></span>Тип 1 (M1 → M2)</span>
+          <span class="legend-item"><span class="swatch" style="background: #10b981;"></span>Тип 2 (M2 → M1)</span>
+          <span class="legend-item"><span class="swatch" style="background: #f59e0b;"></span>Тип 3 (M1)</span>
+          <span class="legend-item"><span class="swatch" style="background: #8b5cf6;"></span>Тип 4 (M2)</span>
+          <span class="legend-item"><span class="swatch" style="background: #fee2e2; border: 1px solid #f87171;"></span>Простой</span>
         </div>
       </div>
 
-      <div id="canvas-container" class="relative flex-1 w-full min-h-[290px]">
-        <canvas id="gantt-canvas" class="w-full h-full block"></canvas>
+      <div id="canvas-container" class="canvas-wrap">
+        <canvas id="gantt-canvas"></canvas>
+        <div id="gantt-tooltip" class="tooltip mono hidden"></div>
       </div>
     </section>
   </main>
 
   <script>
-    const COLORS = {
-      1: { main: "#3b82f6", tail: "#93c5fd", label: "Тип 1 (M1 → M2)" },
-      2: { main: "#10b981", tail: "#6ee7b7", label: "Тип 2 (M2 → M1)" },
-      3: { main: "#f59e0b", tail: "#fcd34d", label: "Тип 3 (только M1)" },
-      4: { main: "#8b5cf6", tail: "#c4b5fd", label: "Тип 4 (только M2)" }
-    };
+    (function () {
+      "use strict";
 
-    const METHOD_FORMULAS = {
-      1: "Метод 1:  op₁ = round(U[20, 1000]),  op₂ = round(U[20, 1000]) — две независимые случайные целые величины (параметры β и α не используются).",
-      2: "Метод 2:  lower ~ U[20, 1000],  upper ~ U[lower + β·(1000 − lower), 1000],  op = round(U[lower, upper]).",
-      3: "Метод 3:  lower ~ U[20, 1000],  upper ~ U[min(lower + 100·β, 1000), min(lower + 100, 1000)],  op = round(U[lower, upper]).",
-      4: "Метод 4:  lower ~ U[20, 1000],  upper ~ U[min(lower + β·lower·(α − 1), 1000), min(α·lower, 1000)],  op = round(U[lower, upper])."
-    };
-
-    let lastResult = null;
-    let lastSeed = 0;
-    let lastEditedN = "n1";
-
-    // =========================================================================
-    // Точная реализация 64-битного Вихря Мерсенна (std::mt19937_64)
-    // =========================================================================
-    class MT19937_64 {
-      constructor(seed) {
-        this.NN = 312;
-        this.MM = 156;
-        this.MATRIX_A = 0xB5026F5AA96619E9n;
-        this.UM = 0xFFFFFFFF80000000n;
-        this.LM = 0x7FFFFFFFn;
-        this.MASK64 = 0xFFFFFFFFFFFFFFFFn;
-        this.mt = new Array(this.NN).fill(0n);
-        this.mti = this.NN + 1;
-        this.init(BigInt(seed));
-      }
-
-      init(seed) {
-        this.mt[0] = seed & this.MASK64;
-        for (this.mti = 1; this.mti < this.NN; this.mti++) {
-          const prev = this.mt[this.mti - 1];
-          this.mt[this.mti] = (6364136223846793005n * (prev ^ (prev >> 62n)) + BigInt(this.mti)) & this.MASK64;
-        }
-      }
-
-      nextUint64() {
-        const mag01 = [0n, this.MATRIX_A];
-        if (this.mti >= this.NN) {
-          let i;
-          for (i = 0; i < this.NN - this.MM; i++) {
-            const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
-            this.mt[i] = this.mt[i + this.MM] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
-          }
-          for (; i < this.NN - 1; i++) {
-            const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
-            this.mt[i] = this.mt[i + (this.MM - this.NN)] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
-          }
-          const x = (this.mt[this.NN - 1] & this.UM) | (this.mt[0] & this.LM);
-          this.mt[this.NN - 1] = this.mt[this.MM - 1] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
-          this.mti = 0;
-        }
-
-        let x = this.mt[this.mti++];
-        x ^= (x >> 29n) & 0x5555555555555555n;
-        x ^= (x << 17n) & 0x71D67FFFEDA60000n;
-        x ^= (x << 37n) & 0xFFF7EEE000000000n;
-        x ^= (x >> 43n);
-        return x & this.MASK64;
-      }
-
-      // Равномерное распределение [0.0, 1.0) с 53-битной точностью double
-      nextDouble() {
-        return Number(this.nextUint64() >> 11n) * (1.0 / 9007199254740992.0);
-      }
-
-      sample(minV, maxV) {
-        return minV + this.nextDouble() * (maxV - minV);
-      }
-    }
-
-    // 1. Генератор интервалов и положительных целых длительностей (4 метода)
-    function generateDuration(rng, method, beta, alpha) {
-      if (method === 1) {
-        return Math.max(1, Math.round(rng.sample(20.0, 1000.0)));
-      }
-      const lower = rng.sample(20.0, 1000.0);
-      let upper = 1000.0;
-      if (method === 2) {
-        upper = rng.sample(lower + beta * (1000.0 - lower), 1000.0);
-      } else if (method === 3) {
-        upper = rng.sample(Math.min(lower + 100.0 * beta, 1000.0), Math.min(lower + 100.0, 1000.0));
-      } else if (method === 4) {
-        upper = rng.sample(
-          Math.min(lower + beta * lower * (alpha - 1.0), 1000.0),
-          Math.min(alpha * lower, 1000.0)
-        );
-      }
-      return Math.max(1, Math.round(rng.sample(lower, upper)));
-    }
-
-    function generateJob(rng, id, method, beta = 0.3, alpha = 1.5) {
-      return {
-        id,
-        firstStage: generateDuration(rng, method, beta, alpha),
-        secondStage: generateDuration(rng, method, beta, alpha)
-      };
-    }
-
-    // Случайная перестановка (1..n) через Вихрь Мерсенна (алгоритм Фишера — Йетса)
-    function buildRandomPermOneBased(n, rng) {
-      const perm = Array.from({ length: n }, (_, idx) => idx + 1);
-      for (let i = n; i > 1; i--) {
-        const j = Number(rng.nextUint64() % BigInt(i));
-        const tmp = perm[i - 1];
-        perm[i - 1] = perm[j];
-        perm[j] = tmp;
-      }
-      return perm;
-    }
-
-    // 2. Поиск оптимума (Алгоритм Беллмана — Джонсона)
-    function buildOptimal(jobs) {
-      const group1 = [];
-      const group2 = [];
-      for (const j of jobs) {
-        if (j.firstStage <= j.secondStage) group1.push(j);
-        else group2.push(j);
-      }
-      group1.sort((l, r) => {
-        if (l.firstStage !== r.firstStage) return l.firstStage - r.firstStage;
-        if (l.secondStage !== r.secondStage) return r.secondStage - l.secondStage;
-        return l.id - r.id;
+      /**
+       * Visual color palette for the four Jackson job types.
+       * @readonly
+       */
+      const PALETTE = Object.freeze({
+        1: Object.freeze({ main: "#3b82f6", tail: "#93c5fd", label: "Тип 1 (M1 → M2)" }),
+        2: Object.freeze({ main: "#10b981", tail: "#6ee7b7", label: "Тип 2 (M2 → M1)" }),
+        3: Object.freeze({ main: "#f59e0b", tail: "#fcd34d", label: "Тип 3 (только M1)" }),
+        4: Object.freeze({ main: "#8b5cf6", tail: "#c4b5fd", label: "Тип 4 (только M2)" })
       });
-      group2.sort((l, r) => {
-        if (l.secondStage !== r.secondStage) return r.secondStage - l.secondStage;
-        if (l.firstStage !== r.firstStage) return l.firstStage - r.firstStage;
-        return l.id - r.id;
+
+      const OP_PREFIX_MAP = Object.freeze({
+        "1_1": "a", "2_1": "b",
+        "2_2": "c", "1_2": "d",
+        "1_3": "p", "2_4": "q"
       });
-      return [...group1, ...group2];
-    }
 
-    // 3. Поиск антиоптимума (Зеркальный разворот оптимальной перестановки)
-    function buildAntiOptimal(jobs) {
-      return buildOptimal(jobs).reverse();
-    }
+      // =======================================================================
+      // 1. Cross-Platform 64-bit Mersenne Twister (std::mt19937_64)
+      // =======================================================================
 
-    // 4. Расчет C_max по тождеству C_max = max(L1, L2, F1, F2)
-    function calcF(orderedJobs) {
-      let t1 = 0;
-      let t2 = 0;
-      for (const j of orderedJobs) {
-        t1 += j.firstStage;
-        t2 = Math.max(t1, t2) + j.secondStage;
-      }
-      return t2;
-    }
-
-    function calcCmaxIdentity(p1, p2, t3 = [], t4 = []) {
-      let sumA = 0, sumB = 0, sumC = 0, sumD = 0, sumP = 0, sumQ = 0;
-      for (const j of p1) { sumA += j.firstStage; sumB += j.secondStage; }
-      for (const j of p2) { sumC += j.firstStage; sumD += j.secondStage; }
-      for (const p of t3) sumP += p;
-      for (const q of t4) sumQ += q;
-      const L1 = sumA + sumP + sumD;
-      const L2 = sumB + sumQ + sumC;
-      const F1 = calcF(p1);
-      const F2 = calcF(p2);
-      return Math.max(L1, L2, F1, F2);
-    }
-
-    function showError(msg) {
-      const banner = document.getElementById("error-banner");
-      const text = document.getElementById("error-message");
-      text.textContent = msg;
-      banner.classList.remove("hidden");
-    }
-
-    function hideError() {
-      document.getElementById("error-banner").classList.add("hidden");
-    }
-
-    function fmtNum(val) {
-      return Math.round(val).toString();
-    }
-
-    function appendInitialBlocks(machineId, twoStageType, twoStageJobs, permutation, singleStageType, singleStageDurations, ganttBlocks) {
-      let currentTime = 0;
-      for (const jobIndex of permutation) {
-        const duration = twoStageJobs[jobIndex].firstStage;
-        const displayNumber = jobIndex + 1;
-        ganttBlocks.push({
-          machine: machineId,
-          type: twoStageType,
-          id: displayNumber,
-          start: currentTime,
-          end: currentTime + duration
-        });
-        currentTime += duration;
-      }
-      for (let i = 0; i < singleStageDurations.length; i++) {
-        const duration = singleStageDurations[i];
-        const displayNumber = i + 1;
-        ganttBlocks.push({
-          machine: machineId,
-          type: singleStageType,
-          id: displayNumber,
-          start: currentTime,
-          end: currentTime + duration
-        });
-        currentTime += duration;
-      }
-      return currentTime;
-    }
-
-    function evaluateConveyorTail(machineId, jobType, initialBlockLoad, jobs, permutation, ganttBlocks) {
-      let prevMachineReadyTime = 0;
-      let currMachineFreeTime = initialBlockLoad;
-      let tailWorkDuration = 0;
-
-      for (const jobIndex of permutation) {
-        prevMachineReadyTime += jobs[jobIndex].firstStage;
-        const operationStart = Math.max(currMachineFreeTime, prevMachineReadyTime);
-        const operationDuration = jobs[jobIndex].secondStage;
-        const operationEnd = operationStart + operationDuration;
-        const displayNumber = jobIndex + 1;
-
-        ganttBlocks.push({
-          machine: machineId,
-          type: jobType,
-          id: displayNumber,
-          start: operationStart,
-          end: operationEnd
-        });
-
-        currMachineFreeTime = operationEnd;
-        tailWorkDuration += operationDuration;
-      }
-
-      const totalWorkTime = initialBlockLoad + tailWorkDuration;
-      const completionTime = currMachineFreeTime;
-      const internalIdleTime = Math.max(0, completionTime - totalWorkTime);
-
-      return {
-        initialBlockLoad,
-        totalWorkTime,
-        completionTime,
-        internalIdleTime,
-        totalIdleTime: 0
-      };
-    }
-
-    function calculateSchedule(input) {
-      const ganttBlocks = [];
-      const initialLoadM1 = appendInitialBlocks(
-        1, 1, input.type1Jobs, input.permutationType1,
-        3, input.type3Durations, ganttBlocks
-      );
-      const initialLoadM2 = appendInitialBlocks(
-        2, 2, input.type2Jobs, input.permutationType2,
-        4, input.type4Durations, ganttBlocks
-      );
-
-      const m1Metrics = evaluateConveyorTail(
-        1, 2, initialLoadM1, input.type2Jobs, input.permutationType2, ganttBlocks
-      );
-      const m2Metrics = evaluateConveyorTail(
-        2, 1, initialLoadM2, input.type1Jobs, input.permutationType1, ganttBlocks
-      );
-
-      const makespan = Math.max(m1Metrics.completionTime, m2Metrics.completionTime);
-      m1Metrics.totalIdleTime = Math.max(0, makespan - m1Metrics.totalWorkTime);
-      m2Metrics.totalIdleTime = Math.max(0, makespan - m2Metrics.totalWorkTime);
-
-      const optP1 = buildOptimal(input.type1Jobs);
-      const optP2 = buildOptimal(input.type2Jobs);
-      const optCmax = calcCmaxIdentity(optP1, optP2, input.type3Durations, input.type4Durations);
-
-      const antiP1 = buildAntiOptimal(input.type1Jobs);
-      const antiP2 = buildAntiOptimal(input.type2Jobs);
-      const antiCmax = calcCmaxIdentity(antiP1, antiP2, input.type3Durations, input.type4Durations);
-
-      return {
-        cMax: makespan,
-        optCmax,
-        antiCmax,
-        m1: [m1Metrics.initialBlockLoad, m1Metrics.totalWorkTime, m1Metrics.completionTime, m1Metrics.internalIdleTime, m1Metrics.totalIdleTime],
-        m2: [m2Metrics.initialBlockLoad, m2Metrics.totalWorkTime, m2Metrics.completionTime, m2Metrics.internalIdleTime, m2Metrics.totalIdleTime],
-        blocks: ganttBlocks
-      };
-    }
-
-    function parsePosInt(str, context) {
-      if (!/^\d+$/.test(str)) {
-        throw new Error(`Все длительности должны быть положительными целыми числами (≥ 1). Ошибка в ${context}: '${str}'.`);
-      }
-      const val = parseInt(str, 10);
-      if (val < 1) {
-        throw new Error(`Длительность операции должна быть положительным целым числом (≥ 1), получено: ${val}.`);
-      }
-      return val;
-    }
-
-    function parseTwoStage(text) {
-      if (!text.trim()) return [];
-      const jobs = [];
-      const pairs = text.split(",");
-      for (let idx = 0; idx < pairs.length; idx++) {
-        const pair = pairs[idx];
-        const parts = pair.trim().split(/\s+/).filter(Boolean);
-        if (parts.length !== 2) {
-          throw new Error(`Ожидалась пара положительных целых чисел (op1 op2), получено: '${pair.trim()}'`);
+      /**
+       * Exact implementation of C++ std::mt19937_64 using BigInt arithmetic.
+       * Combined with 53-bit IEEE-754 scaling, guarantees bit-identical draws
+       * across C++, Python (via C++ core), and JavaScript for any 64-bit seed.
+       */
+      class MT19937_64 {
+        /** @param {bigint|number|string} seed */
+        constructor(seed) {
+          this.NN = 312;
+          this.MM = 156;
+          this.MATRIX_A = 0xB5026F5AA96619E9n;
+          this.UM = 0xFFFFFFFF80000000n;
+          this.LM = 0x7FFFFFFFn;
+          this.MASK64 = 0xFFFFFFFFFFFFFFFFn;
+          this.mt = new Array(this.NN).fill(0n);
+          this.mti = this.NN + 1;
+          this.init(BigInt(seed));
         }
-        const a = parsePosInt(parts[0], `паре '${pair.trim()}'`);
-        const b = parsePosInt(parts[1], `паре '${pair.trim()}'`);
-        jobs.push({ id: idx + 1, firstStage: a, secondStage: b });
+
+        /** @param {bigint} seed */
+        init(seed) {
+          this.mt[0] = seed & this.MASK64;
+          for (this.mti = 1; this.mti < this.NN; this.mti++) {
+            const prev = this.mt[this.mti - 1];
+            this.mt[this.mti] =
+              (6364136223846793005n * (prev ^ (prev >> 62n)) + BigInt(this.mti)) & this.MASK64;
+          }
+        }
+
+        /** @returns {bigint} Unsigned 64-bit integer. */
+        nextUint64() {
+          const mag01 = [0n, this.MATRIX_A];
+          if (this.mti >= this.NN) {
+            let i = 0;
+            for (; i < this.NN - this.MM; i++) {
+              const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
+              this.mt[i] = this.mt[i + this.MM] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+            }
+            for (; i < this.NN - 1; i++) {
+              const x = (this.mt[i] & this.UM) | (this.mt[i + 1] & this.LM);
+              this.mt[i] = this.mt[i + (this.MM - this.NN)] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+            }
+            const x = (this.mt[this.NN - 1] & this.UM) | (this.mt[0] & this.LM);
+            this.mt[this.NN - 1] = this.mt[this.MM - 1] ^ (x >> 1n) ^ mag01[Number(x & 1n)];
+            this.mti = 0;
+          }
+
+          let x = this.mt[this.mti++];
+          x ^= (x >> 29n) & 0x5555555555555555n;
+          x ^= (x << 17n) & 0x71D67FFFEDA60000n;
+          x ^= (x << 37n) & 0xFFF7EEE000000000n;
+          x ^= (x >> 43n);
+          return x & this.MASK64;
+        }
+
+        /** @returns {number} Uniform 53-bit double in [0, 1). */
+        nextDouble() {
+          return Number(this.nextUint64() >> 11n) * (1.0 / 9007199254740992.0);
+        }
+
+        /**
+         * Uniform real draw in [low, high). Matches C++ `sample_real`.
+         * @param {number} low
+         * @param {number} high
+         * @returns {number}
+         */
+        sampleReal(low, high) {
+          if (high <= low) {
+            return low;
+          }
+          return low + this.nextDouble() * (high - low);
+        }
       }
-      return jobs;
-    }
 
-    function parsePosIntList(text, context) {
-      if (!text.trim()) return [];
-      return text.trim().split(/\s+/).filter(Boolean).map((x) => parsePosInt(x, context));
-    }
+      // =======================================================================
+      // 2. Scheduling Algorithms (J2 || C_max)
+      // =======================================================================
 
-    function parsePermutation(text, n, name) {
-      if (n === 0) return [];
-      const nums = text.trim().split(/\s+/).filter(Boolean).map((x) => parseInt(x, 10));
-      const sorted = [...nums].sort((a, b) => a - b);
-      const expected = Array.from({ length: n }, (_, i) => i + 1);
-      if (sorted.length !== n || !sorted.every((val, idx) => val === expected[idx])) {
-        throw new Error(`Перестановка ${name} должна содержать числа от 1 до ${n} без повторений.`);
-      }
-      return nums.map((x) => x - 1);
-    }
+      const JacksonAlgo = Object.freeze({
+        /**
+         * Validates that perm is a bijection of {0, ..., n - 1}.
+         * @param {number[]} perm
+         * @param {number} n
+         * @param {string} label
+         */
+        validatePermutation(perm, n, label) {
+          if (perm.length !== n) {
+            throw new Error(
+              `Перестановка ${label} должна иметь длину ${n} (получено: ${perm.length}).`
+            );
+          }
+          const seen = new Uint8Array(n);
+          for (const idx of perm) {
+            if (!Number.isInteger(idx) || idx < 0 || idx >= n || seen[idx]) {
+              throw new Error(
+                `Перестановка ${label} должна содержать числа от 1 до ${n} без повторений.`
+              );
+            }
+            seen[idx] = 1;
+          }
+        },
 
-    function applyRightShift(blocks, mIdx, CEnd) {
-      const tailType = mIdx === 1 ? 2 : 1;
-      const head = blocks.filter((b) => b.machine === mIdx && b.type !== tailType).map((b) => ({ ...b }));
-      const tail = blocks.filter((b) => b.machine === mIdx && b.type === tailType).map((b) => ({ ...b }));
-      let cursor = CEnd;
-      for (let i = tail.length - 1; i >= 0; i--) {
-        const dur = tail[i].end - tail[i].start;
-        tail[i].end = cursor;
-        tail[i].start = cursor - dur;
-        cursor -= dur;
-      }
-      return [...head, ...tail];
-    }
+        /**
+         * Validates durations, counts, and permutations in a problem instance.
+         * @param {Object} inst
+         */
+        validateInstance(inst) {
+          const total =
+            inst.type1Jobs.length + inst.type2Jobs.length +
+            inst.type3Durations.length + inst.type4Durations.length;
+          if (total === 0) {
+            throw new Error("Введите хотя бы одно требование.");
+          }
+          for (const j of inst.type1Jobs) {
+            if (!Number.isInteger(j.firstStage) || !Number.isInteger(j.secondStage) || j.firstStage < 1 || j.secondStage < 1) {
+              throw new Error("Длительности Типа 1 должны быть положительными целыми числами (≥ 1).");
+            }
+          }
+          for (const j of inst.type2Jobs) {
+            if (!Number.isInteger(j.firstStage) || !Number.isInteger(j.secondStage) || j.firstStage < 1 || j.secondStage < 1) {
+              throw new Error("Длительности Типа 2 должны быть положительными целыми числами (≥ 1).");
+            }
+          }
+          for (const p of inst.type3Durations) {
+            if (!Number.isInteger(p) || p < 1) {
+              throw new Error("Длительности Типа 3 должны быть положительными целыми числами (≥ 1).");
+            }
+          }
+          for (const q of inst.type4Durations) {
+            if (!Number.isInteger(q) || q < 1) {
+              throw new Error("Длительности Типа 4 должны быть положительными целыми числами (≥ 1).");
+            }
+          }
+          this.validatePermutation(inst.perm1, inst.type1Jobs.length, "π₁");
+          this.validatePermutation(inst.perm2, inst.type2Jobs.length, "π₂");
+        },
 
-    // Автоматический расчет соотношения n = n1 + n2
-    function resolveNCounts() {
-      const elN = document.getElementById("gen-n-total");
-      const elN1 = document.getElementById("gen-n1");
-      const elN2 = document.getElementById("gen-n2");
+        /**
+         * Builds the Bellman-Johnson optimal sequence (returns 0-based indices).
+         * @param {Array<{id:number, firstStage:number, secondStage:number}>} jobs
+         * @returns {number[]}
+         */
+        buildBellmanJohnsonPerm(jobs) {
+          const group1 = [];
+          const group2 = [];
+          for (let i = 0; i < jobs.length; i++) {
+            if (jobs[i].firstStage <= jobs[i].secondStage) {
+              group1.push(i);
+            } else {
+              group2.push(i);
+            }
+          }
+          group1.sort((l, r) => {
+            if (jobs[l].firstStage !== jobs[r].firstStage) return jobs[l].firstStage - jobs[r].firstStage;
+            if (jobs[l].secondStage !== jobs[r].secondStage) return jobs[r].secondStage - jobs[l].secondStage;
+            return jobs[l].id - jobs[r].id;
+          });
+          group2.sort((l, r) => {
+            if (jobs[l].secondStage !== jobs[r].secondStage) return jobs[r].secondStage - jobs[l].secondStage;
+            if (jobs[l].firstStage !== jobs[r].firstStage) return jobs[l].firstStage - jobs[r].firstStage;
+            return jobs[l].id - jobs[r].id;
+          });
+          return group1.concat(group2);
+        },
 
-      const sN = elN.value.trim();
-      const sN1 = elN1.value.trim();
-      const sN2 = elN2.value.trim();
+        /**
+         * Builds the anti-optimal sequence as the mirror reversal of Bellman-Johnson.
+         * @param {Array<{id:number, firstStage:number, secondStage:number}>} jobs
+         * @returns {number[]}
+         */
+        buildAntiOptimalPerm(jobs) {
+          return this.buildBellmanJohnsonPerm(jobs).reverse();
+        },
 
-      let n = sN !== "" ? parseInt(sN, 10) : null;
-      let n1 = sN1 !== "" ? parseInt(sN1, 10) : null;
-      let n2 = sN2 !== "" ? parseInt(sN2, 10) : null;
+        /**
+         * Computes standalone two-machine flow-shop makespan F(perm).
+         * @param {Array<{firstStage:number, secondStage:number}>} jobs
+         * @param {number[]} perm 0-based indices
+         * @returns {number}
+         */
+        computeFlowshopMakespan(jobs, perm) {
+          let t1 = 0;
+          let t2 = 0;
+          for (const idx of perm) {
+            t1 += jobs[idx].firstStage;
+            t2 = Math.max(t1, t2) + jobs[idx].secondStage;
+          }
+          return t2;
+        },
 
-      if ((n !== null && (Number.isNaN(n) || n < 0)) ||
-          (n1 !== null && (Number.isNaN(n1) || n1 < 0)) ||
-          (n2 !== null && (Number.isNaN(n2) || n2 < 0))) {
-        throw new Error("Количества требований n, n₁, n₂ должны быть неотрицательными целыми числами.");
-      }
+        /**
+         * Computes C_max via the analytical identity max(L1, L2, F1(pi1), F2(pi2)).
+         * @param {Object} inst
+         * @param {number[]} perm1 0-based indices
+         * @param {number[]} perm2 0-based indices
+         * @returns {number}
+         */
+        computeCmaxIdentity(inst, perm1, perm2) {
+          let sumA = 0, sumB = 0, sumC = 0, sumD = 0, sumP = 0, sumQ = 0;
+          for (const j of inst.type1Jobs) { sumA += j.firstStage; sumB += j.secondStage; }
+          for (const j of inst.type2Jobs) { sumC += j.firstStage; sumD += j.secondStage; }
+          for (const p of inst.type3Durations) sumP += p;
+          for (const q of inst.type4Durations) sumQ += q;
 
-      if (n !== null && n1 !== null && n2 === null) {
-        if (n1 > n) throw new Error(`n₁ (${n1}) не может быть больше общего количества требований n (${n}).`);
-        n2 = n - n1;
-      } else if (n !== null && n2 !== null && n1 === null) {
-        if (n2 > n) throw new Error(`n₂ (${n2}) не может быть больше общего количества требований n (${n}).`);
-        n1 = n - n2;
-      } else if (n === null && n1 !== null && n2 !== null) {
-        n = n1 + n2;
-      } else if (n === null && n1 !== null && n2 === null) {
-        n = n1;
-        n2 = 0;
-      } else if (n === null && n2 !== null && n1 === null) {
-        n = n2;
-        n1 = 0;
-      } else if (n !== null && n1 === null && n2 === null) {
-        n1 = Math.ceil(n / 2);
-        n2 = n - n1;
-      } else if (n !== null && n1 !== null && n2 !== null) {
-        if (n1 + n2 !== n) {
-          if (lastEditedN === "n1" && n1 <= n) {
-            n2 = n - n1;
-          } else if (lastEditedN === "n2" && n2 <= n) {
-            n1 = n - n2;
+          const L1 = sumA + sumP + sumD;
+          const L2 = sumB + sumQ + sumC;
+          const F1 = this.computeFlowshopMakespan(inst.type1Jobs, perm1);
+          const F2 = this.computeFlowshopMakespan(inst.type2Jobs, perm2);
+          return Math.max(L1, L2, F1, F2);
+        },
+
+        /**
+         * Evaluates the full Jackson schedule, machine metrics, and Gantt blocks.
+         * @param {Object} inst
+         * @param {"manual"|"opt"|"anti"} [permMode="manual"]
+         * @returns {Object}
+         */
+        evaluateSchedule(inst, permMode = "manual") {
+          this.validateInstance(inst);
+
+          const optPerm1 = this.buildBellmanJohnsonPerm(inst.type1Jobs);
+          const optPerm2 = this.buildBellmanJohnsonPerm(inst.type2Jobs);
+          const antiPerm1 = optPerm1.slice().reverse();
+          const antiPerm2 = optPerm2.slice().reverse();
+
+          let activePerm1 = inst.perm1;
+          let activePerm2 = inst.perm2;
+          if (permMode === "opt") {
+            activePerm1 = optPerm1;
+            activePerm2 = optPerm2;
+          } else if (permMode === "anti") {
+            activePerm1 = antiPerm1;
+            activePerm2 = antiPerm2;
+          }
+
+          const blocks = [];
+
+          const appendInitial = (machineId, twoType, twoJobs, perm, singleType, singleDurs) => {
+            let t = 0;
+            for (const idx of perm) {
+              const dur = twoJobs[idx].firstStage;
+              blocks.push({ machine: machineId, type: twoType, id: twoJobs[idx].id, start: t, end: t + dur });
+              t += dur;
+            }
+            for (let i = 0; i < singleDurs.length; i++) {
+              const dur = singleDurs[i];
+              blocks.push({ machine: machineId, type: singleType, id: i + 1, start: t, end: t + dur });
+              t += dur;
+            }
+            return t;
+          };
+
+          const evaluateTail = (machineId, tailType, initLoad, jobs, perm) => {
+            let prevReady = 0;
+            let currFree = initLoad;
+            let tailWork = 0;
+            for (const idx of perm) {
+              prevReady += jobs[idx].firstStage;
+              const start = Math.max(currFree, prevReady);
+              const dur = jobs[idx].secondStage;
+              const end = start + dur;
+              blocks.push({ machine: machineId, type: tailType, id: jobs[idx].id, start, end });
+              currFree = end;
+              tailWork += dur;
+            }
+            const totalWork = initLoad + tailWork;
+            const completion = currFree;
+            return {
+              initialBlockLoad: initLoad,
+              totalWorkTime: totalWork,
+              completionTime: completion,
+              internalIdleTime: Math.max(0, completion - totalWork),
+              totalIdleTime: 0
+            };
+          };
+
+          const t1Load = appendInitial(1, 1, inst.type1Jobs, activePerm1, 3, inst.type3Durations);
+          const t2Load = appendInitial(2, 2, inst.type2Jobs, activePerm2, 4, inst.type4Durations);
+
+          const m1 = evaluateTail(1, 2, t1Load, inst.type2Jobs, activePerm2);
+          const m2 = evaluateTail(2, 1, t2Load, inst.type1Jobs, activePerm1);
+
+          const cMax = Math.max(m1.completionTime, m2.completionTime);
+          m1.totalIdleTime = Math.max(0, cMax - m1.totalWorkTime);
+          m2.totalIdleTime = Math.max(0, cMax - m2.totalWorkTime);
+
+          return {
+            cMax,
+            optCmax: this.computeCmaxIdentity(inst, optPerm1, optPerm2),
+            antiCmax: this.computeCmaxIdentity(inst, antiPerm1, antiPerm2),
+            appliedPerm1: activePerm1.slice(),
+            appliedPerm2: activePerm2.slice(),
+            m1,
+            m2,
+            blocks
+          };
+        }
+      });
+
+      // =======================================================================
+      // 3. Reproducible Instance Generator (Shafransky & Barketov, 2007)
+      // =======================================================================
+
+      const JacksonGen = Object.freeze({
+        /**
+         * Generates a cryptographically-backed non-zero 64-bit seed when Seed = 0.
+         * @returns {bigint}
+         */
+        makeRandomSeed() {
+          if (window.crypto && window.crypto.getRandomValues) {
+            const buf = new Uint32Array(2);
+            window.crypto.getRandomValues(buf);
+            const seed = (BigInt(buf[0]) << 32n) | BigInt(buf[1]);
+            return seed === 0n ? 1n : seed;
+          }
+          return BigInt(Math.floor(Math.random() * 4294967295) + 1);
+        },
+
+        /** @param {Object} cfg */
+        validateConfig(cfg) {
+          if (cfg.n1 + cfg.n2 + cfg.n3 + cfg.n4 === 0) {
+            throw new Error("Общее количество работ (n₁ + n₂ + n₃ + n₄) должно быть больше нуля.");
+          }
+          if (cfg.minVal < 1 || cfg.maxVal < cfg.minVal) {
+            throw new Error("Диапазон генерации должен удовлетворять 1 ≤ min ≤ max.");
+          }
+          if (cfg.mode !== "pairs") {
+            if (cfg.method < 1 || cfg.method > 4) {
+              throw new Error("Метод генерации интервалов должен быть от 1 до 4.");
+            }
+            if (!Number.isFinite(cfg.beta) || cfg.beta < 0 || cfg.beta > 1) {
+              throw new Error("Параметр β должен лежать в интервале [0, 1].");
+            }
+            if (cfg.method === 4 && (!Number.isFinite(cfg.alpha) || cfg.alpha <= 1)) {
+              throw new Error("Для Метода 4 параметр α должен быть строго больше 1.");
+            }
+          }
+        },
+
+        /**
+         * Step 1: Generates interval [L, U] according to Methods 1..4.
+         * @param {MT19937_64} rng
+         * @param {number} method
+         * @param {number} minVal
+         * @param {number} maxVal
+         * @param {number} beta
+         * @param {number} alpha
+         * @returns {{lower:number, upper:number}}
+         */
+        generateInterval(rng, method, minVal, maxVal, beta, alpha) {
+          if (method === 1) {
+            const x1 = rng.sampleReal(minVal, maxVal);
+            const x2 = rng.sampleReal(minVal, maxVal);
+            return { lower: Math.min(x1, x2), upper: Math.max(x1, x2) };
+          }
+          const lower = rng.sampleReal(minVal, maxVal);
+          let upper = maxVal;
+          if (method === 2) {
+            upper = rng.sampleReal(lower + beta * (maxVal - lower), maxVal);
+          } else if (method === 3) {
+            upper = rng.sampleReal(
+              Math.min(lower + 100.0 * beta, maxVal),
+              Math.min(lower + 100.0, maxVal)
+            );
+          } else if (method === 4) {
+            upper = rng.sampleReal(
+              Math.min(lower + beta * lower * (alpha - 1.0), maxVal),
+              Math.min(alpha * lower, maxVal)
+            );
+          }
+          return { lower, upper };
+        },
+
+        /**
+         * Step 2: Reduces [L, U] (or direct range) to a positive integer duration.
+         * @param {MT19937_64} rng
+         * @param {Object} cfg
+         * @returns {number}
+         */
+        generateDuration(rng, cfg) {
+          let raw = cfg.minVal;
+          if (cfg.mode === "pairs") {
+            raw = rng.sampleReal(cfg.minVal, cfg.maxVal);
           } else {
-            throw new Error(`Сумма n₁ (${n1}) + n₂ (${n2}) должна равняться n (${n}). Оставьте одно из полей n₁ или n₂ пустым для авторасчёта.`);
+            const iv = this.generateInterval(rng, cfg.method, cfg.minVal, cfg.maxVal, cfg.beta, cfg.alpha);
+            if (cfg.mode === "lower") raw = iv.lower;
+            else if (cfg.mode === "upper") raw = iv.upper;
+            else if (cfg.mode === "mid") raw = 0.5 * (iv.lower + iv.upper);
+            else raw = rng.sampleReal(iv.lower, iv.upper);
+          }
+          return Math.max(1, Math.round(raw));
+        },
+
+        /**
+         * Fisher-Yates shuffle returning a 0-based permutation. Matches C++.
+         * @param {number} n
+         * @param {MT19937_64} rng
+         * @returns {number[]}
+         */
+        generateRandomPermutation(n, rng) {
+          const perm = Array.from({ length: n }, (_, i) => i);
+          for (let i = n; i > 1; i--) {
+            const j = Number(rng.nextUint64() % BigInt(i));
+            const tmp = perm[i - 1];
+            perm[i - 1] = perm[j];
+            perm[j] = tmp;
+          }
+          return perm;
+        },
+
+        /**
+         * Generates a complete ProblemInstance and returns { instance, seed }.
+         * @param {Object} cfg
+         * @returns {{instance: Object, seed: bigint}}
+         */
+        generateInstance(cfg) {
+          this.validateConfig(cfg);
+          const actualSeed = (cfg.seed === 0n) ? this.makeRandomSeed() : cfg.seed;
+          const rng = new MT19937_64(actualSeed);
+
+          const type1Jobs = [];
+          const type2Jobs = [];
+          const type3Durations = [];
+          const type4Durations = [];
+
+          for (let i = 0; i < cfg.n1; i++) {
+            const a = this.generateDuration(rng, cfg);
+            const b = this.generateDuration(rng, cfg);
+            type1Jobs.push({ id: i + 1, firstStage: a, secondStage: b });
+          }
+          for (let i = 0; i < cfg.n2; i++) {
+            const c = this.generateDuration(rng, cfg);
+            const d = this.generateDuration(rng, cfg);
+            type2Jobs.push({ id: i + 1, firstStage: c, secondStage: d });
+          }
+          for (let i = 0; i < cfg.n3; i++) {
+            type3Durations.push(this.generateDuration(rng, cfg));
+          }
+          for (let i = 0; i < cfg.n4; i++) {
+            type4Durations.push(this.generateDuration(rng, cfg));
+          }
+
+          return {
+            seed: actualSeed,
+            instance: {
+              type1Jobs,
+              perm1: this.generateRandomPermutation(cfg.n1, rng),
+              type2Jobs,
+              perm2: this.generateRandomPermutation(cfg.n2, rng),
+              type3Durations,
+              type4Durations
+            }
+          };
+        }
+      });
+
+      // =======================================================================
+      // 4. Input Parsing & Clean Blank-Line .txt Serializer / Parser
+      // =======================================================================
+
+      const JacksonIO = Object.freeze({
+        /**
+         * @param {string} token
+         * @param {string} context
+         * @returns {number}
+         */
+        parsePositiveInt(token, context) {
+          if (!/^\d+$/.test(token)) {
+            throw new Error(
+              `Все длительности должны быть положительными целыми числами (≥ 1). Ошибка в ${context}: '${token}'.`
+            );
+          }
+          const value = Number.parseInt(token, 10);
+          if (!Number.isSafeInteger(value) || value < 1) {
+            throw new Error(`Длительность должна быть ≥ 1 (${context}), получено: '${token}'.`);
+          }
+          return value;
+        },
+
+        /**
+         * @param {string} text
+         * @param {string} label
+         */
+        parseTwoStageEntry(text, label) {
+          const trimmed = text.trim();
+          if (!trimmed) return [];
+          const jobs = [];
+          const pairs = trimmed.split(",");
+          for (let idx = 0; idx < pairs.length; idx++) {
+            const parts = pairs[idx].trim().split(/\s+/).filter(Boolean);
+            if (parts.length !== 2) {
+              throw new Error(
+                `В поле «${label}» ожидалась пара целых чисел (op1 op2), получено: '${pairs[idx].trim()}'.`
+              );
+            }
+            const op1 = this.parsePositiveInt(parts[0], `${label}, пара #${idx + 1}`);
+            const op2 = this.parsePositiveInt(parts[1], `${label}, пара #${idx + 1}`);
+            jobs.push({ id: idx + 1, firstStage: op1, secondStage: op2 });
+          }
+          return jobs;
+        },
+
+        /**
+         * @param {string} text
+         * @param {string} label
+         * @returns {number[]}
+         */
+        parseIntListEntry(text, label) {
+          const trimmed = text.trim();
+          if (!trimmed) return [];
+          return trimmed.split(/\s+/).filter(Boolean).map((tok) => this.parsePositiveInt(tok, label));
+        },
+
+        /**
+         * Parses 1-based permutation entry into 0-based indices.
+         * @param {string} text
+         * @param {number} n
+         * @param {string} name
+         * @returns {number[]}
+         */
+        parsePermutationEntry(text, n, name) {
+          const trimmed = text.trim();
+          if (n === 0) {
+            if (trimmed) {
+              throw new Error(`Задана перестановка ${name}, но количество работ данного типа равно 0.`);
+            }
+            return [];
+          }
+          if (!trimmed) {
+            return Array.from({ length: n }, (_, i) => i);
+          }
+          const zeroBased = trimmed
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((tok) => this.parsePositiveInt(tok, `перестановке ${name}`) - 1);
+          JacksonAlgo.validatePermutation(zeroBased, n, name);
+          return zeroBased;
+        },
+
+        /**
+         * Parses clean blank-line-delimited .txt text into a ProblemInstance.
+         * Supports column & inline layouts, commas, UTF-8 BOM, '-' placeholders,
+         * and compact 1-line-per-block fallback.
+         * @param {string} rawText
+         * @returns {Object}
+         */
+        parseTxt(rawText) {
+          const cleaned = rawText
+            .replace(/^\uFEFF/, "")
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .trim();
+
+          if (!cleaned) {
+            throw new Error("Файл пуст.");
+          }
+
+          let blocks = cleaned.split(/\n[ \t]*\n/).map((b) => b.trim());
+          if (blocks.length === 1 && cleaned.includes("\n")) {
+            blocks = cleaned.split("\n").map((line) => line.trim()).filter(Boolean);
+          }
+
+          const extractNums = (idx, label) => {
+            const raw = (blocks[idx] || "").trim();
+            if (!raw || raw === "-") return [];
+            return raw.replace(/,/g, " ").split(/\s+/).filter(Boolean)
+              .map((tok) => this.parsePositiveInt(tok, label));
+          };
+
+          const buildJobs = (nums, label) => {
+            if (nums.length % 2 !== 0) {
+              throw new Error(
+                `В блоке «${label}» нечётное количество чисел (${nums.length}), ожидались пары.`
+              );
+            }
+            const jobs = [];
+            for (let i = 0; i < nums.length; i += 2) {
+              jobs.push({ id: i / 2 + 1, firstStage: nums[i], secondStage: nums[i + 1] });
+            }
+            return jobs;
+          };
+
+          const buildPerm = (nums, n, label) => {
+            if (n === 0) {
+              if (nums.length > 0) {
+                throw new Error(`Задана перестановка ${label} при отсутствии работ.`);
+              }
+              return [];
+            }
+            if (nums.length === 0) {
+              return Array.from({ length: n }, (_, i) => i);
+            }
+            const perm = nums.map((v) => v - 1);
+            JacksonAlgo.validatePermutation(perm, n, label);
+            return perm;
+          };
+
+          const type1Jobs = buildJobs(extractNums(0, "Тип 1"), "Тип 1");
+          const perm1 = buildPerm(extractNums(1, "Перестановка π₁"), type1Jobs.length, "π₁");
+          const type2Jobs = buildJobs(extractNums(2, "Тип 2"), "Тип 2");
+          const perm2 = buildPerm(extractNums(3, "Перестановка π₂"), type2Jobs.length, "π₂");
+          const type3Durations = extractNums(4, "Тип 3");
+          const type4Durations = extractNums(5, "Тип 4");
+
+          const instance = { type1Jobs, perm1, type2Jobs, perm2, type3Durations, type4Durations };
+          JacksonAlgo.validateInstance(instance);
+          return instance;
+        },
+
+        /**
+         * Serializes a ProblemInstance to the clean blank-line-delimited .txt layout.
+         * @param {Object} inst
+         * @returns {string}
+         */
+        serializeTxt(inst) {
+          JacksonAlgo.validateInstance(inst);
+          const blocks = [
+            inst.type1Jobs.length ? inst.type1Jobs.map((j) => `${j.firstStage} ${j.secondStage}`).join("\n") : "-",
+            inst.perm1.length ? inst.perm1.map((x) => x + 1).join(" ") : "-",
+            inst.type2Jobs.length ? inst.type2Jobs.map((j) => `${j.firstStage} ${j.secondStage}`).join("\n") : "-",
+            inst.perm2.length ? inst.perm2.map((x) => x + 1).join(" ") : "-"
+          ];
+          if (inst.type3Durations.length || inst.type4Durations.length) {
+            blocks.push(inst.type3Durations.length ? inst.type3Durations.join(" ") : "-");
+          }
+          if (inst.type4Durations.length) {
+            blocks.push(inst.type4Durations.join(" "));
+          }
+          return blocks.join("\n\n") + "\n";
+        }
+      });
+
+      // =======================================================================
+      // 5. Gantt Chart Renderer (Canvas, Tooltips, SVG & PNG Export)
+      // =======================================================================
+
+      class GanttRenderer {
+        /**
+         * @param {HTMLCanvasElement} canvas
+         * @param {HTMLElement} container
+         * @param {HTMLElement} tooltipEl
+         */
+        constructor(canvas, container, tooltipEl) {
+          this.canvas = canvas;
+          this.container = container;
+          this.tooltipEl = tooltipEl;
+          this.hitboxes = [];
+          this.LEFT_PAD = 130;
+          this.RIGHT_PAD = 50;
+          this.Y_M1 = 60;
+          this.Y_M2 = 180;
+          this.BAR_H = 56;
+
+          this.canvas.addEventListener("mousemove", (e) => this.handleMouseMove(e));
+          this.canvas.addEventListener("mouseleave", () => this.hideTooltip());
+        }
+
+        /**
+         * Shifts second-stage (tail) operations on a machine rightwards to completionTime.
+         * @param {Array<Object>} blocks
+         * @param {number} machineId
+         * @param {number} completionTime
+         */
+        static applyRightShift(blocks, machineId, completionTime) {
+          const tailType = machineId === 1 ? 2 : 1;
+          const head = blocks.filter((b) => b.machine === machineId && b.type !== tailType).map((b) => ({ ...b }));
+          const tail = blocks.filter((b) => b.machine === machineId && b.type === tailType).map((b) => ({ ...b }));
+          let cursor = completionTime;
+          for (let i = tail.length - 1; i >= 0; i--) {
+            const dur = tail[i].end - tail[i].start;
+            tail[i].end = cursor;
+            tail[i].start = cursor - dur;
+            cursor -= dur;
+          }
+          return head.concat(tail);
+        }
+
+        static computeGridStep(cMax) {
+          if (cMax > 20000) return 2500;
+          if (cMax > 5000) return 1000;
+          if (cMax > 1000) return 250;
+          if (cMax > 200) return 50;
+          if (cMax > 50) return 10;
+          if (cMax > 20) return 2;
+          return 1;
+        }
+
+        static extractIdleIntervals(blocks, cMax) {
+          const idles = [];
+          let cursor = 0;
+          for (const b of blocks) {
+            if (b.start > cursor) {
+              idles.push({ start: cursor, end: b.start, label: "Окно простоя" });
+            }
+            cursor = b.end;
+          }
+          if (cMax > cursor) {
+            idles.push({ start: cursor, end: cMax, label: "Простой" });
+          }
+          return idles;
+        }
+
+        static opName(block) {
+          return `${OP_PREFIX_MAP[`${block.machine}_${block.type}`]}_${block.id}`;
+        }
+
+        static escapeXml(str) {
+          return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        clear() {
+          this.hitboxes = [];
+          this.hideTooltip();
+          const ctx = this.canvas.getContext("2d");
+          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        /**
+         * @param {Object} result
+         * @param {{shiftRight:boolean, macroView:boolean}} options
+         */
+        render(result, options) {
+          const dpr = window.devicePixelRatio || 1;
+          const w = Math.max(this.container.clientWidth, 620);
+          const h = Math.max(this.container.clientHeight, 295);
+
+          this.canvas.width = Math.round(w * dpr);
+          this.canvas.height = Math.round(h * dpr);
+          const ctx = this.canvas.getContext("2d");
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, w, h);
+
+          this.hitboxes = [];
+          this.hideTooltip();
+
+          const cMax = result.cMax;
+          const scale = (w - this.LEFT_PAD - this.RIGHT_PAD) / Math.max(cMax, 1);
+
+          const bM1 = options.shiftRight
+            ? GanttRenderer.applyRightShift(result.blocks, 1, result.m1.completionTime)
+            : result.blocks.filter((b) => b.machine === 1);
+          const bM2 = options.shiftRight
+            ? GanttRenderer.applyRightShift(result.blocks, 2, result.m2.completionTime)
+            : result.blocks.filter((b) => b.machine === 2);
+
+          // Vertical time grid
+          const step = GanttRenderer.computeGridStep(cMax);
+          ctx.save();
+          ctx.strokeStyle = "#e2e8f0";
+          ctx.fillStyle = "#64748b";
+          ctx.font = "11px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.setLineDash([2, 2]);
+          for (let t = 0; t <= cMax; t += step) {
+            const x = this.LEFT_PAD + t * scale;
+            ctx.beginPath();
+            ctx.moveTo(x, 30);
+            ctx.lineTo(x, this.Y_M2 + this.BAR_H + 25);
+            ctx.stroke();
+            ctx.fillText(String(t), x, 20);
+          }
+          ctx.restore();
+
+          this.drawTrack(ctx, "Прибор 1 (M1)", this.Y_M1, bM1, result.m1.initialBlockLoad, cMax, scale, "T₁", options.macroView);
+          this.drawTrack(ctx, "Прибор 2 (M2)", this.Y_M2, bM2, result.m2.initialBlockLoad, cMax, scale, "T₂", options.macroView);
+
+          // Final C_max vertical line
+          const xCmax = this.LEFT_PAD + cMax * scale;
+          ctx.save();
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]);
+          ctx.beginPath();
+          ctx.moveTo(xCmax, 25);
+          ctx.lineTo(xCmax, this.Y_M2 + this.BAR_H + 28);
+          ctx.stroke();
+
+          ctx.fillStyle = "#dc2626";
+          ctx.font = "bold 13px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(`C_max = ${cMax}`, xCmax, this.Y_M2 + this.BAR_H + 44);
+          ctx.restore();
+        }
+
+        drawTrack(ctx, title, y, blocks, tVal, cMax, scale, tName, macroView) {
+          const h = this.BAR_H;
+          ctx.save();
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "bold 13px system-ui, sans-serif";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText(title, 12, y + h / 2);
+
+          ctx.fillStyle = "#f8fafc";
+          ctx.strokeStyle = "#cbd5e1";
+          ctx.fillRect(this.LEFT_PAD, y, cMax * scale, h);
+          ctx.strokeRect(this.LEFT_PAD, y, cMax * scale, h);
+
+          // Idle boxes
+          for (const idle of GanttRenderer.extractIdleIntervals(blocks, cMax)) {
+            const x1 = this.LEFT_PAD + idle.start * scale;
+            const x2 = this.LEFT_PAD + idle.end * scale;
+            const dur = idle.end - idle.start;
+            ctx.fillStyle = "#fee2e2";
+            ctx.strokeStyle = "#fca5a5";
+            ctx.lineWidth = 1;
+            ctx.fillRect(x1, y, x2 - x1, h);
+            ctx.strokeRect(x1, y, x2 - x1, h);
+
+            if (x2 - x1 > 40) {
+              ctx.fillStyle = "#b91c1c";
+              ctx.font = "italic 11px system-ui, sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText(idle.label, (x1 + x2) / 2, y + h / 2 - 7);
+              ctx.fillText(String(dur), (x1 + x2) / 2, y + h / 2 + 9);
+            }
+
+            this.hitboxes.push({
+              x1, y1: y, x2, y2: y + h,
+              text: `${idle.label}: длит. ${dur} [${idle.start} — ${idle.end}]`
+            });
+          }
+
+          // Operation blocks
+          for (const b of blocks) {
+            const x1 = this.LEFT_PAD + b.start * scale;
+            const x2 = this.LEFT_PAD + b.end * scale;
+            const pal = PALETTE[b.type];
+            const isTail = (b.machine === 1 && b.type === 2) || (b.machine === 2 && b.type === 1);
+            const fillCol = isTail ? pal.tail : pal.main;
+            const textCol = isTail ? "#0f172a" : "#ffffff";
+            const name = GanttRenderer.opName(b);
+            const dur = b.end - b.start;
+
+            ctx.fillStyle = fillCol;
+            if (macroView) {
+              ctx.fillRect(x1, y, Math.max(x2 - x1 + 0.5, 1), h);
+            } else {
+              ctx.strokeStyle = "#1e293b";
+              ctx.lineWidth = 1;
+              ctx.fillRect(x1, y, x2 - x1, h);
+              ctx.strokeRect(x1, y, x2 - x1, h);
+
+              if (x2 - x1 > 28) {
+                ctx.fillStyle = textCol;
+                ctx.textAlign = "center";
+                ctx.font = "bold 12px system-ui, sans-serif";
+                ctx.fillText(name, (x1 + x2) / 2, y + h / 2 - 7);
+                ctx.font = "11px system-ui, sans-serif";
+                ctx.fillText(`(${dur})`, (x1 + x2) / 2, y + h / 2 + 9);
+              }
+              if (x2 - x1 > 18) {
+                ctx.fillStyle = "#334155";
+                ctx.textAlign = "center";
+                ctx.font = "11px system-ui, sans-serif";
+                ctx.fillText(String(b.end), x2, y + h + 13);
+              }
+            }
+
+            this.hitboxes.push({
+              x1, y1: y, x2, y2: y + h,
+              text: `${name} (${pal.label}): длит. ${dur} [${b.start} — ${b.end}]`
+            });
+          }
+
+          if (macroView) {
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(this.LEFT_PAD, y, cMax * scale, h);
+          }
+
+          if (tVal > 0) {
+            const xT = this.LEFT_PAD + tVal * scale;
+            ctx.strokeStyle = "#0f172a";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 2]);
+            ctx.beginPath();
+            ctx.moveTo(xT, y - 10);
+            ctx.lineTo(xT, y + h + 10);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#0f172a";
+            ctx.textAlign = "center";
+            ctx.font = "bold 11px system-ui, sans-serif";
+            ctx.fillText(`${tName}=${tVal}`, xT, y - 16);
+          }
+          ctx.restore();
+        }
+
+        handleMouseMove(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          const mx = event.clientX - rect.left;
+          const my = event.clientY - rect.top;
+
+          let hit = null;
+          for (let i = this.hitboxes.length - 1; i >= 0; i--) {
+            const box = this.hitboxes[i];
+            if (mx >= box.x1 && mx <= box.x2 && my >= box.y1 && my <= box.y2) {
+              hit = box;
+              break;
+            }
+          }
+
+          if (hit) {
+            this.tooltipEl.textContent = hit.text;
+            this.tooltipEl.classList.remove("hidden");
+            const tipW = this.tooltipEl.offsetWidth;
+            const left = Math.min(Math.max(8, mx + 12), rect.width - tipW - 8);
+            const top = Math.max(8, my - 34);
+            this.tooltipEl.style.left = `${left}px`;
+            this.tooltipEl.style.top = `${top}px`;
+          } else {
+            this.hideTooltip();
           }
         }
-      } else {
-        throw new Error("Укажите количество требований n, n₁ или n₂.");
-      }
 
-      elN.value = String(n);
-      elN1.value = String(n1);
-      elN2.value = String(n2);
-      return { n, n1, n2 };
-    }
-
-    function updateMethodFormulaNote() {
-      const m = parseInt(document.getElementById("gen-method").value || "1", 10);
-      document.getElementById("method-formula-note").textContent = METHOD_FORMULAS[m] || "";
-    }
-
-    function generateWithMersenneTwister() {
-      hideError();
-      try {
-        const { n1, n2 } = resolveNCounts();
-        const n3 = parseInt(document.getElementById("gen-n3").value || "0", 10);
-        const n4 = parseInt(document.getElementById("gen-n4").value || "0", 10);
-        const method = parseInt(document.getElementById("gen-method").value || "1", 10);
-        const beta = parseFloat(document.getElementById("gen-beta").value || "0.3");
-        const alpha = parseFloat(document.getElementById("gen-alpha").value || "1.5");
-        let seedInput = parseInt(document.getElementById("gen-seed").value || "0", 10);
-
-        if (n3 < 0 || n4 < 0 || (n1 + n2 + n3 + n4 === 0)) {
-          throw new Error("Общее количество работ должно быть больше нуля.");
+        hideTooltip() {
+          this.tooltipEl.classList.add("hidden");
         }
 
-        if (!seedInput || seedInput <= 0) {
-          seedInput = Math.floor(Math.random() * 4294967295) + 1;
-        }
-        lastSeed = seedInput;
-        document.getElementById("seed-badge").textContent = `mt19937_64 Seed: ${lastSeed}`;
+        /**
+         * Builds a publication-ready standalone SVG string of the current Gantt chart.
+         * @param {Object} result
+         * @param {{shiftRight:boolean, macroView:boolean}} options
+         * @param {number} [width=1100]
+         * @param {number} [height=310]
+         * @returns {string}
+         */
+        buildSvgString(result, options, width = 1100, height = 310) {
+          const cMax = result.cMax;
+          const scale = (width - this.LEFT_PAD - this.RIGHT_PAD) / Math.max(cMax, 1);
+          const bM1 = options.shiftRight
+            ? GanttRenderer.applyRightShift(result.blocks, 1, result.m1.completionTime)
+            : result.blocks.filter((b) => b.machine === 1);
+          const bM2 = options.shiftRight
+            ? GanttRenderer.applyRightShift(result.blocks, 2, result.m2.completionTime)
+            : result.blocks.filter((b) => b.machine === 2);
 
-        const rng = new MT19937_64(lastSeed);
-        const t1 = [];
-        const t2 = [];
-        const t3 = [];
-        const t4 = [];
+          const lines = [
+            `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+            `<style>text { font-family: "Segoe UI", Arial, sans-serif; }</style>`,
+            `<rect width="${width}" height="${height}" fill="#ffffff"/>`
+          ];
 
-        for (let i = 0; i < n1; i++) t1.push(generateJob(rng, i + 1, method, beta, alpha));
-        for (let i = 0; i < n2; i++) t2.push(generateJob(rng, i + 1, method, beta, alpha));
-        for (let i = 0; i < n3; i++) t3.push(generateDuration(rng, method, beta, alpha));
-        for (let i = 0; i < n4; i++) t4.push(generateDuration(rng, method, beta, alpha));
+          const step = GanttRenderer.computeGridStep(cMax);
+          for (let t = 0; t <= cMax; t += step) {
+            const x = this.LEFT_PAD + t * scale;
+            lines.push(`<line x1="${x.toFixed(2)}" y1="30" x2="${x.toFixed(2)}" y2="${this.Y_M2 + this.BAR_H + 25}" stroke="#e2e8f0" stroke-dasharray="2,2"/>`);
+            lines.push(`<text x="${x.toFixed(2)}" y="20" text-anchor="middle" font-size="11" fill="#64748b">${t}</text>`);
+          }
 
-        // При генерации подставляется СЛУЧАЙНАЯ перестановка через Вихрь Мерсенна
-        const randPi1 = buildRandomPermOneBased(n1, rng);
-        const randPi2 = buildRandomPermOneBased(n2, rng);
+          const appendTrack = (title, y, blocks, tVal, tName) => {
+            const h = this.BAR_H;
+            lines.push(`<text x="12" y="${(y + h / 2 + 4).toFixed(1)}" font-size="13" font-weight="bold" fill="#1e293b">${GanttRenderer.escapeXml(title)}</text>`);
+            lines.push(`<rect x="${this.LEFT_PAD}" y="${y}" width="${(cMax * scale).toFixed(2)}" height="${h}" fill="#f8fafc" stroke="#cbd5e1"/>`);
 
-        document.getElementById("ent-t1").value = t1.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
-        document.getElementById("ent-pi1").value = randPi1.join(" ");
-        document.getElementById("ent-t2").value = t2.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
-        document.getElementById("ent-pi2").value = randPi2.join(" ");
-        document.getElementById("ent-t3").value = t3.join(" ");
-        document.getElementById("ent-t4").value = t4.join(" ");
+            for (const idle of GanttRenderer.extractIdleIntervals(blocks, cMax)) {
+              const x1 = this.LEFT_PAD + idle.start * scale;
+              const bw = (idle.end - idle.start) * scale;
+              lines.push(`<rect x="${x1.toFixed(2)}" y="${y}" width="${bw.toFixed(2)}" height="${h}" fill="#fee2e2" stroke="#fca5a5"/>`);
+              if (bw > 40) {
+                const cx = x1 + bw / 2;
+                lines.push(`<text x="${cx.toFixed(2)}" y="${(y + h / 2 - 2).toFixed(1)}" text-anchor="middle" font-size="10" font-style="italic" fill="#b91c1c">${GanttRenderer.escapeXml(idle.label)}</text>`);
+                lines.push(`<text x="${cx.toFixed(2)}" y="${(y + h / 2 + 12).toFixed(1)}" text-anchor="middle" font-size="10" font-style="italic" fill="#b91c1c">${idle.end - idle.start}</text>`);
+              }
+            }
 
-        solveAndDraw("MANUAL");
-      } catch (err) {
-        showError(err.message || String(err));
-      }
-    }
+            for (const b of blocks) {
+              const x1 = this.LEFT_PAD + b.start * scale;
+              const bw = (b.end - b.start) * scale;
+              const pal = PALETTE[b.type];
+              const isTail = (b.machine === 1 && b.type === 2) || (b.machine === 2 && b.type === 1);
+              const fillCol = isTail ? pal.tail : pal.main;
+              const textCol = isTail ? "#0f172a" : "#ffffff";
 
-    function solveAndDraw(mode = "MANUAL") {
-      hideError();
-      try {
-        const t1 = parseTwoStage(document.getElementById("ent-t1").value);
-        const t2 = parseTwoStage(document.getElementById("ent-t2").value);
-        const t3 = parsePosIntList(document.getElementById("ent-t3").value, "Типе 3");
-        const t4 = parsePosIntList(document.getElementById("ent-t4").value, "Типе 4");
+              if (options.macroView) {
+                lines.push(`<rect x="${x1.toFixed(2)}" y="${y}" width="${Math.max(bw + 0.4, 1).toFixed(2)}" height="${h}" fill="${fillCol}"/>`);
+              } else {
+                lines.push(`<rect x="${x1.toFixed(2)}" y="${y}" width="${bw.toFixed(2)}" height="${h}" fill="${fillCol}" stroke="#1e293b" stroke-width="1"/>`);
+                if (bw > 28) {
+                  const cx = x1 + bw / 2;
+                  lines.push(`<text x="${cx.toFixed(2)}" y="${(y + h / 2 - 2).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="bold" fill="${textCol}">${GanttRenderer.escapeXml(GanttRenderer.opName(b))}</text>`);
+                  lines.push(`<text x="${cx.toFixed(2)}" y="${(y + h / 2 + 13).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textCol}">(${b.end - b.start})</text>`);
+                }
+                if (bw > 18) {
+                  lines.push(`<text x="${(x1 + bw).toFixed(2)}" y="${y + h + 14}" text-anchor="middle" font-size="10" fill="#334155">${b.end}</text>`);
+                }
+              }
+            }
 
-        let pi1, pi2;
-        if (mode === "OPT") {
-          const opt1 = buildOptimal(t1).map((j) => j.id);
-          const opt2 = buildOptimal(t2).map((j) => j.id);
-          document.getElementById("ent-pi1").value = opt1.join(" ");
-          document.getElementById("ent-pi2").value = opt2.join(" ");
-          pi1 = opt1.map((x) => x - 1);
-          pi2 = opt2.map((x) => x - 1);
-        } else if (mode === "ANTI") {
-          const anti1 = buildAntiOptimal(t1).map((j) => j.id);
-          const anti2 = buildAntiOptimal(t2).map((j) => j.id);
-          document.getElementById("ent-pi1").value = anti1.join(" ");
-          document.getElementById("ent-pi2").value = anti2.join(" ");
-          pi1 = anti1.map((x) => x - 1);
-          pi2 = anti2.map((x) => x - 1);
-        } else if (mode === "RANDOM") {
-          const randSeed = Math.floor(Math.random() * 4294967295) + 1;
-          const rng = new MT19937_64(randSeed);
-          const r1 = buildRandomPermOneBased(t1.length, rng);
-          const r2 = buildRandomPermOneBased(t2.length, rng);
-          document.getElementById("ent-pi1").value = r1.join(" ");
-          document.getElementById("ent-pi2").value = r2.join(" ");
-          pi1 = r1.map((x) => x - 1);
-          pi2 = r2.map((x) => x - 1);
-        } else {
-          pi1 = parsePermutation(document.getElementById("ent-pi1").value, t1.length, "π₁");
-          pi2 = parsePermutation(document.getElementById("ent-pi2").value, t2.length, "π₂");
-        }
+            if (options.macroView) {
+              lines.push(`<rect x="${this.LEFT_PAD}" y="${y}" width="${(cMax * scale).toFixed(2)}" height="${h}" fill="none" stroke="#94a3b8" stroke-width="1"/>`);
+            }
+            if (tVal > 0) {
+              const xT = this.LEFT_PAD + tVal * scale;
+              lines.push(`<line x1="${xT.toFixed(2)}" y1="${y - 10}" x2="${xT.toFixed(2)}" y2="${y + h + 10}" stroke="#0f172a" stroke-width="2" stroke-dasharray="4,2"/>`);
+              lines.push(`<text x="${xT.toFixed(2)}" y="${y - 14}" text-anchor="middle" font-size="11" font-weight="bold" fill="#0f172a">${GanttRenderer.escapeXml(tName)}=${tVal}</text>`);
+            }
+          };
 
-        lastResult = calculateSchedule({
-          type1Jobs: t1,
-          permutationType1: pi1,
-          type2Jobs: t2,
-          permutationType2: pi2,
-          type3Durations: t3,
-          type4Durations: t4
-        });
-        redrawCached();
-      } catch (err) {
-        showError(err.message || String(err));
-      }
-    }
+          appendTrack("Прибор 1 (M1)", this.Y_M1, bM1, result.m1.initialBlockLoad, "T1");
+          appendTrack("Прибор 2 (M2)", this.Y_M2, bM2, result.m2.initialBlockLoad, "T2");
 
-    function redrawCached() {
-      if (!lastResult) return;
-      const res = lastResult;
-      const cMax = res.cMax;
-      const optCmax = res.optCmax;
-      const antiCmax = res.antiCmax;
-      const m1 = res.m1;
-      const m2 = res.m2;
-
-      document.getElementById("stats-label").textContent =
-        `ТЕКУЩЕЕ C_max: ${fmtNum(cMax)}  |  Оптимальное C_max (Беллман — Джонсон): ${fmtNum(optCmax)}  |  Антиоптимальное C_max (Разворот): ${fmtNum(antiCmax)}\n` +
-        `Прибор 1 (M1):  Стартовый блок T₁ = ${fmtNum(m1[0])}  |  Полезная работа = ${fmtNum(m1[1])}  |  Завершение C¹ = ${fmtNum(m1[2])}  |  Внутр. простой = ${fmtNum(m1[3])}  |  Полный простой = ${fmtNum(m1[4])}\n` +
-        `Прибор 2 (M2):  Стартовый блок T₂ = ${fmtNum(m2[0])}  |  Полезная работа = ${fmtNum(m2[1])}  |  Завершение C² = ${fmtNum(m2[2])}  |  Внутр. простой = ${fmtNum(m2[3])}  |  Полный простой = ${fmtNum(m2[4])}`;
-
-      const container = document.getElementById("canvas-container");
-      const canvas = document.getElementById("gantt-canvas");
-      const dpr = window.devicePixelRatio || 1;
-      const w = Math.max(container.clientWidth, 600);
-      const h = Math.max(container.clientHeight, 290);
-
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      const ctx = canvas.getContext("2d");
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-
-      const leftPad = 130;
-      const rightPad = 50;
-      const usableW = w - leftPad - rightPad;
-      const scale = usableW / Math.max(cMax, 1);
-
-      const shiftRight = document.getElementById("chk-shift-right").checked;
-      const bM1 = shiftRight
-        ? applyRightShift(res.blocks, 1, m1[2])
-        : res.blocks.filter((b) => b.machine === 1);
-      const bM2 = shiftRight
-        ? applyRightShift(res.blocks, 2, m2[2])
-        : res.blocks.filter((b) => b.machine === 2);
-
-      const yM1 = 60;
-      const yM2 = 180;
-      const barH = 56;
-
-      // Сетка времени
-      let step = 1;
-      if (cMax > 5000) step = 500;
-      else if (cMax > 1000) step = 250;
-      else if (cMax > 200) step = 50;
-      else if (cMax > 50) step = 10;
-      else if (cMax > 20) step = 2;
-
-      ctx.save();
-      ctx.strokeStyle = "#e2e8f0";
-      ctx.fillStyle = "#64748b";
-      ctx.font = "11px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.setLineDash([2, 2]);
-      for (let t = 0; t <= Math.floor(cMax) + 1; t += step) {
-        const x = leftPad + t * scale;
-        ctx.beginPath();
-        ctx.moveTo(x, 30);
-        ctx.lineTo(x, yM2 + barH + 25);
-        ctx.stroke();
-        ctx.fillText(fmtNum(t), x, 20);
-      }
-      ctx.restore();
-
-      drawMachineTrack(ctx, "Прибор 1 (M1)", yM1, barH, bM1, m1[0], cMax, leftPad, scale, "T₁");
-      drawMachineTrack(ctx, "Прибор 2 (M2)", yM2, barH, bM2, m2[0], cMax, leftPad, scale, "T₂");
-
-      // Финальная отсечка C_max
-      const xCmax = leftPad + cMax * scale;
-      ctx.save();
-      ctx.strokeStyle = "#dc2626";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 3]);
-      ctx.beginPath();
-      ctx.moveTo(xCmax, 25);
-      ctx.lineTo(xCmax, yM2 + barH + 28);
-      ctx.stroke();
-
-      ctx.fillStyle = "#dc2626";
-      ctx.font = "bold 13px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(`C_max = ${fmtNum(cMax)}`, xCmax, yM2 + barH + 44);
-      ctx.restore();
-    }
-
-    function drawIdleBox(ctx, x1, y1, x2, y2, dur, label) {
-      ctx.save();
-      ctx.fillStyle = "#fee2e2";
-      ctx.strokeStyle = "#fca5a5";
-      ctx.lineWidth = 1;
-      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-
-      if (x2 - x1 > 38) {
-        ctx.fillStyle = "#b91c1c";
-        ctx.font = "italic 11px Inter, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - 4);
-        ctx.fillText(fmtNum(dur), (x1 + x2) / 2, (y1 + y2) / 2 + 11);
-      }
-      ctx.restore();
-    }
-
-    function drawMachineTrack(ctx, title, y, h, blocks, tVal, cMax, leftPad, scale, tName) {
-      ctx.save();
-      ctx.fillStyle = "#1e293b";
-      ctx.font = "bold 13px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText(title, 12, y + h / 2);
-
-      // Фон дорожки
-      ctx.fillStyle = "#f8fafc";
-      ctx.strokeStyle = "#cbd5e1";
-      ctx.fillRect(leftPad, y, cMax * scale, h);
-      ctx.strokeRect(leftPad, y, cMax * scale, h);
-
-      // Интервалы простоя
-      let cursor = 0;
-      for (const b of blocks) {
-        if (b.start > cursor) {
-          drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + b.start * scale, y + h, b.start - cursor, "Окно простоя");
-        }
-        cursor = b.end;
-      }
-      if (cMax > cursor) {
-        drawIdleBox(ctx, leftPad + cursor * scale, y, leftPad + cMax * scale, y + h, cMax - cursor, "Простой");
-      }
-
-      // Блоки операций
-      for (const b of blocks) {
-        const x1 = leftPad + b.start * scale;
-        const x2 = leftPad + b.end * scale;
-        const palette = COLORS[b.type];
-        const isTail = (b.machine === 1 && b.type === 2) || (b.machine === 2 && b.type === 1);
-        const fillCol = isTail ? palette.tail : palette.main;
-        const textCol = isTail ? "#0f172a" : "#ffffff";
-
-        ctx.fillStyle = fillCol;
-        ctx.strokeStyle = "#1e293b";
-        ctx.lineWidth = 1;
-        ctx.fillRect(x1, y, x2 - x1, h);
-        ctx.strokeRect(x1, y, x2 - x1, h);
-
-        const opMap = {
-          "1_1": `a_${b.id}`, "2_1": `b_${b.id}`,
-          "2_2": `c_${b.id}`, "1_2": `d_${b.id}`,
-          "1_3": `p_${b.id}`, "2_4": `q_${b.id}`
-        };
-        const opName = opMap[`${b.machine}_${b.type}`];
-        const dur = b.end - b.start;
-
-        if (x2 - x1 > 28) {
-          ctx.fillStyle = textCol;
-          ctx.textAlign = "center";
-          ctx.font = "bold 12px Inter, sans-serif";
-          ctx.fillText(opName, (x1 + x2) / 2, y + h / 2 - 7);
-          ctx.font = "11px Inter, sans-serif";
-          ctx.fillText(`(${fmtNum(dur)})`, (x1 + x2) / 2, y + h / 2 + 9);
-        }
-
-        if (x2 - x1 > 18) {
-          ctx.fillStyle = "#334155";
-          ctx.textAlign = "center";
-          ctx.font = "11px Inter, sans-serif";
-          ctx.fillText(fmtNum(b.end), x2, y + h + 12);
+          const xCmax = this.LEFT_PAD + cMax * scale;
+          lines.push(`<line x1="${xCmax.toFixed(2)}" y1="25" x2="${xCmax.toFixed(2)}" y2="${this.Y_M2 + this.BAR_H + 28}" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,3"/>`);
+          lines.push(`<text x="${xCmax.toFixed(2)}" y="${this.Y_M2 + this.BAR_H + 46}" text-anchor="middle" font-size="13" font-weight="bold" fill="#dc2626">C_max = ${cMax}</text>`);
+          lines.push("</svg>\n");
+          return lines.join("\n");
         }
       }
 
-      // Рубеж T1 / T2
-      if (tVal > 0) {
-        const xT = leftPad + tVal * scale;
-        ctx.strokeStyle = "#0f172a";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 2]);
-        ctx.beginPath();
-        ctx.moveTo(xT, y - 10);
-        ctx.lineTo(xT, y + h + 10);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "#0f172a";
-        ctx.textAlign = "center";
-        ctx.font = "bold 11px Inter, sans-serif";
-        ctx.fillText(`${tName}=${fmtNum(tVal)}`, xT, y - 15);
+      // =======================================================================
+      // 6. Built-in Verification Suite (invocable via JacksonCore.runSelfTests())
+      // =======================================================================
+
+      const JacksonTests = Object.freeze({
+        assert(cond, msg) {
+          if (!cond) throw new Error(`Self-test failed: ${msg}`);
+        },
+
+        runAll() {
+          // 1. Preset 1 + round-trip .txt serialization
+          const sampleTxt = "3 6\n5 2\n4 5\n\n1 2 3\n\n4 5\n8 3\n2 6\n\n1 2 3\n\n3 2\n\n4\n";
+          const inst1 = JacksonIO.parseTxt(sampleTxt);
+          const res1 = JacksonAlgo.evaluateSchedule(inst1, "manual");
+          this.assert(res1.cMax === JacksonAlgo.computeCmaxIdentity(inst1, inst1.perm1, inst1.perm2), "Identity mismatch on Preset 1");
+          const reparsed = JacksonIO.parseTxt(JacksonIO.serializeTxt(inst1));
+          this.assert(JacksonAlgo.evaluateSchedule(reparsed).cMax === res1.cMax, "Round-trip serialization mismatch");
+
+          // 2. UTF-8 BOM + inline commas + '-' placeholder
+          const bomInst = JacksonIO.parseTxt("\uFEFF4 3, 6 2, 5 4\n\n1 3 2\n\n-\n\n-\n");
+          this.assert(bomInst.type1Jobs.length === 3 && bomInst.type2Jobs.length === 0, "BOM/dash parsing failed");
+
+          // 3. Reproducibility & identity check on 100 generated instances
+          const modes = ["pairs", "lower", "upper", "mid", "random"];
+          for (let k = 0; k < 100; k++) {
+            const cfg = {
+              n1: (k % 7) + 1,
+              n2: k % 5,
+              n3: k % 3,
+              n4: k % 2,
+              mode: modes[k % modes.length],
+              method: (k % 4) + 1,
+              minVal: k % 2 === 0 ? 20 : 2,
+              maxVal: k % 2 === 0 ? 1000 : 100,
+              beta: 0.3,
+              alpha: 1.5,
+              seed: BigInt(10000 + k)
+            };
+            const a = JacksonGen.generateInstance(cfg);
+            const b = JacksonGen.generateInstance(cfg);
+            this.assert(JacksonIO.serializeTxt(a.instance) === JacksonIO.serializeTxt(b.instance), "Non-deterministic seed draw");
+            const r = JacksonAlgo.evaluateSchedule(a.instance, "manual");
+            const idCmax = JacksonAlgo.computeCmaxIdentity(a.instance, a.instance.perm1, a.instance.perm2);
+            this.assert(r.cMax === idCmax, "Gantt C_max != analytical identity");
+            this.assert(r.optCmax <= r.cMax && r.optCmax <= r.antiCmax, "Optimal bound violated");
+          }
+          return { passed: true, cases: 102 };
+        }
+      });
+
+      // =======================================================================
+      // 7. Application Controller
+      // =======================================================================
+
+      class AppController {
+        constructor() {
+          this.lastResult = null;
+          this.lastEditedN = "n1";
+          this.el = {
+            errorBanner: document.getElementById("error-banner"),
+            errorMessage: document.getElementById("error-message"),
+            seedBadge: document.getElementById("seed-badge"),
+            genNTotal: document.getElementById("gen-n-total"),
+            genN1: document.getElementById("gen-n1"),
+            genN2: document.getElementById("gen-n2"),
+            genN3: document.getElementById("gen-n3"),
+            genN4: document.getElementById("gen-n4"),
+            genDetMode: document.getElementById("gen-det-mode"),
+            genMethod: document.getElementById("gen-method"),
+            genRange: document.getElementById("gen-range"),
+            genBeta: document.getElementById("gen-beta"),
+            genAlpha: document.getElementById("gen-alpha"),
+            genSeed: document.getElementById("gen-seed"),
+            formulaNote: document.getElementById("method-formula-note"),
+            fileInput: document.getElementById("file-input"),
+            entT1: document.getElementById("ent-t1"),
+            entPi1: document.getElementById("ent-pi1"),
+            entT2: document.getElementById("ent-t2"),
+            entPi2: document.getElementById("ent-pi2"),
+            entT3: document.getElementById("ent-t3"),
+            entT4: document.getElementById("ent-t4"),
+            chkShiftRight: document.getElementById("chk-shift-right"),
+            chkMacroView: document.getElementById("chk-macro-view"),
+            statsLabel: document.getElementById("stats-label")
+          };
+
+          this.gantt = new GanttRenderer(
+            document.getElementById("gantt-canvas"),
+            document.getElementById("canvas-container"),
+            document.getElementById("gantt-tooltip")
+          );
+
+          this.bindEvents();
+          this.updateFormulaNote();
+          this.loadPreset1();
+        }
+
+        bindEvents() {
+          document.getElementById("btn-preset-1").addEventListener("click", () => this.loadPreset1());
+          document.getElementById("btn-preset-2").addEventListener("click", () => this.loadPreset2());
+          document.getElementById("btn-close-error").addEventListener("click", () => this.hideError());
+          document.getElementById("btn-generate").addEventListener("click", () => this.onGenerate());
+          document.getElementById("btn-solve-random").addEventListener("click", () => this.onRandomPerm());
+          document.getElementById("btn-solve-opt").addEventListener("click", () => this.solve("opt"));
+          document.getElementById("btn-solve-anti").addEventListener("click", () => this.solve("anti"));
+          document.getElementById("btn-solve").addEventListener("click", () => this.solve("manual"));
+          document.getElementById("btn-clear-fields").addEventListener("click", () => this.onClearFields());
+          document.getElementById("btn-save-txt").addEventListener("click", () => this.onSaveTxt());
+          document.getElementById("btn-export-png").addEventListener("click", () => this.onExportPng());
+          document.getElementById("btn-export-svg").addEventListener("click", () => this.onExportSvg());
+
+          document.getElementById("btn-load-txt").addEventListener("click", () => {
+            this.el.fileInput.value = "";
+            this.el.fileInput.click();
+          });
+
+          this.el.fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              try {
+                const inst = JacksonIO.parseTxt(String(ev.target.result || ""));
+                this.populateFromInstance(inst);
+                this.solve("manual");
+              } catch (err) {
+                this.showError(`Ошибка чтения файла: ${err.message || String(err)}`);
+              }
+            };
+            reader.readAsText(file, "UTF-8");
+          });
+
+          this.el.chkShiftRight.addEventListener("change", () => this.redraw());
+          this.el.chkMacroView.addEventListener("change", () => this.redraw());
+          this.el.genDetMode.addEventListener("change", () => this.updateFormulaNote());
+          this.el.genMethod.addEventListener("change", () => this.updateFormulaNote());
+          this.el.genRange.addEventListener("change", () => this.updateFormulaNote());
+          this.el.genN1.addEventListener("input", () => { this.lastEditedN = "n1"; });
+          this.el.genN2.addEventListener("input", () => { this.lastEditedN = "n2"; });
+          window.addEventListener("resize", () => this.redraw());
+        }
+
+        showError(msg) {
+          this.el.errorMessage.textContent = msg;
+          this.el.errorBanner.classList.remove("hidden");
+        }
+
+        hideError() {
+          this.el.errorBanner.classList.add("hidden");
+        }
+
+        getRangeBounds() {
+          return this.el.genRange.value === "2_100"
+            ? { minVal: 2.0, maxVal: 100.0 }
+            : { minVal: 20.0, maxVal: 1000.0 };
+        }
+
+        updateFormulaNote() {
+          const mode = this.el.genDetMode.value;
+          const m = Number.parseInt(this.el.genMethod.value, 10) || 1;
+          const { minVal, maxVal } = this.getRangeBounds();
+          this.el.genMethod.disabled = (mode === "pairs");
+
+          if (mode === "pairs") {
+            this.el.formulaNote.textContent = `Простые пары: op₁, op₂ = round(U[${minVal}, ${maxVal}])`;
+            return;
+          }
+          const modeExpr = {
+            lower: "op = round(L)",
+            upper: "op = round(U)",
+            mid: "op = round((L + U) / 2)",
+            random: "op = round(U[L, U])"
+          }[mode];
+          const ivExpr = {
+            1: `x₁, x₂ ~ U[${minVal}, ${maxVal}], L = min, U = max`,
+            2: `L ~ U[${minVal}, ${maxVal}], U ~ U[L + β·(${maxVal} − L), ${maxVal}]`,
+            3: `L ~ U[${minVal}, ${maxVal}], U ~ U[min(L + 100·β, ${maxVal}), min(L + 100, ${maxVal})]`,
+            4: `L ~ U[${minVal}, ${maxVal}], U ~ U[min(L + β·L·(α − 1), ${maxVal}), min(α·L, ${maxVal})]`
+          }[m];
+          this.el.formulaNote.textContent = `Метод ${m}: ${ivExpr}; ${modeExpr}.`;
+        }
+
+        resolveNCounts() {
+          const parseOpt = (val, name) => {
+            const s = val.trim();
+            if (!s) return null;
+            if (!/^\d+$/.test(s)) throw new Error(`Поле ${name} должно быть неотрицательным целым числом.`);
+            return Number.parseInt(s, 10);
+          };
+
+          let n = parseOpt(this.el.genNTotal.value, "n");
+          let n1 = parseOpt(this.el.genN1.value, "n₁");
+          let n2 = parseOpt(this.el.genN2.value, "n₂");
+
+          if (n !== null && n1 !== null && n2 === null) {
+            if (n1 > n) throw new Error(`n₁ (${n1}) не может превышать n (${n}).`);
+            n2 = n - n1;
+          } else if (n !== null && n2 !== null && n1 === null) {
+            if (n2 > n) throw new Error(`n₂ (${n2}) не может превышать n (${n}).`);
+            n1 = n - n2;
+          } else if (n === null && n1 !== null && n2 !== null) {
+            n = n1 + n2;
+          } else if (n === null && n1 !== null && n2 === null) {
+            n = n1; n2 = 0;
+          } else if (n === null && n2 !== null && n1 === null) {
+            n = n2; n1 = 0;
+          } else if (n !== null && n1 === null && n2 === null) {
+            n1 = Math.ceil(n / 2); n2 = n - n1;
+          } else if (n !== null && n1 !== null && n2 !== null) {
+            if (n1 + n2 !== n) {
+              if (this.lastEditedN === "n1" && n1 <= n) n2 = n - n1;
+              else if (this.lastEditedN === "n2" && n2 <= n) n1 = n - n2;
+              else throw new Error(`Сумма n₁ (${n1}) + n₂ (${n2}) должна равняться n (${n}).`);
+            }
+          } else {
+            throw new Error("Укажите количество требований n, n₁ или n₂.");
+          }
+
+          this.el.genNTotal.value = String(n);
+          this.el.genN1.value = String(n1);
+          this.el.genN2.value = String(n2);
+          return { n1, n2 };
+        }
+
+        readInstanceFromInputs() {
+          const type1Jobs = JacksonIO.parseTwoStageEntry(this.el.entT1.value, "Тип 1");
+          const type2Jobs = JacksonIO.parseTwoStageEntry(this.el.entT2.value, "Тип 2");
+          const type3Durations = JacksonIO.parseIntListEntry(this.el.entT3.value, "Тип 3");
+          const type4Durations = JacksonIO.parseIntListEntry(this.el.entT4.value, "Тип 4");
+          const perm1 = JacksonIO.parsePermutationEntry(this.el.entPi1.value, type1Jobs.length, "π₁");
+          const perm2 = JacksonIO.parsePermutationEntry(this.el.entPi2.value, type2Jobs.length, "π₂");
+          return { type1Jobs, perm1, type2Jobs, perm2, type3Durations, type4Durations };
+        }
+
+        populateFromInstance(inst) {
+          this.el.entT1.value = inst.type1Jobs.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
+          this.el.entPi1.value = inst.perm1.map((x) => x + 1).join(" ");
+          this.el.entT2.value = inst.type2Jobs.map((j) => `${j.firstStage} ${j.secondStage}`).join(", ");
+          this.el.entPi2.value = inst.perm2.map((x) => x + 1).join(" ");
+          this.el.entT3.value = inst.type3Durations.join(" ");
+          this.el.entT4.value = inst.type4Durations.join(" ");
+        }
+
+        onGenerate() {
+          this.hideError();
+          try {
+            const { n1, n2 } = this.resolveNCounts();
+            const n3 = Number.parseInt(this.el.genN3.value || "0", 10);
+            const n4 = Number.parseInt(this.el.genN4.value || "0", 10);
+            if (!Number.isInteger(n3) || n3 < 0 || !Number.isInteger(n4) || n4 < 0) {
+              throw new Error("Параметры n₃ и n₄ должны быть неотрицательными целыми числами.");
+            }
+
+            const seedStr = this.el.genSeed.value.trim() || "0";
+            if (!/^\d+$/.test(seedStr)) {
+              throw new Error("Seed должен быть неотрицательным целым числом.");
+            }
+
+            const { minVal, maxVal } = this.getRangeBounds();
+            const cfg = {
+              n1, n2, n3, n4,
+              mode: this.el.genDetMode.value,
+              method: Number.parseInt(this.el.genMethod.value, 10) || 1,
+              minVal, maxVal,
+              beta: Number.parseFloat(this.el.genBeta.value),
+              alpha: Number.parseFloat(this.el.genAlpha.value),
+              seed: BigInt(seedStr)
+            };
+
+            const { instance, seed } = JacksonGen.generateInstance(cfg);
+            this.el.seedBadge.textContent = `mt19937_64 Seed: ${seed.toString()}`;
+            this.populateFromInstance(instance);
+            this.solve("manual");
+          } catch (err) {
+            this.showError(err.message || String(err));
+          }
+        }
+
+        onRandomPerm() {
+          this.hideError();
+          try {
+            const inst = this.readInstanceFromInputs();
+            const rng = new MT19937_64(JacksonGen.makeRandomSeed());
+            inst.perm1 = JacksonGen.generateRandomPermutation(inst.type1Jobs.length, rng);
+            inst.perm2 = JacksonGen.generateRandomPermutation(inst.type2Jobs.length, rng);
+            this.el.entPi1.value = inst.perm1.map((x) => x + 1).join(" ");
+            this.el.entPi2.value = inst.perm2.map((x) => x + 1).join(" ");
+            this.solve("manual");
+          } catch (err) {
+            this.showError(err.message || String(err));
+          }
+        }
+
+        solve(permMode = "manual") {
+          this.hideError();
+          try {
+            const inst = this.readInstanceFromInputs();
+            const res = JacksonAlgo.evaluateSchedule(inst, permMode);
+            if (permMode === "opt" || permMode === "anti") {
+              this.el.entPi1.value = res.appliedPerm1.map((x) => x + 1).join(" ");
+              this.el.entPi2.value = res.appliedPerm2.map((x) => x + 1).join(" ");
+            }
+            this.lastResult = res;
+            this.updateStats(res);
+            this.redraw();
+          } catch (err) {
+            this.showError(err.message || String(err));
+          }
+        }
+
+        updateStats(res) {
+          const { m1, m2 } = res;
+          this.el.statsLabel.textContent =
+            `ТЕКУЩЕЕ C_max: ${res.cMax}  |  Оптимальное C_max (Беллман — Джонсон): ${res.optCmax}  |  Антиоптимальное C_max (Разворот): ${res.antiCmax}\n` +
+            `Прибор 1 (M1):  Стартовый блок T₁ = ${m1.initialBlockLoad}  |  Полезная работа = ${m1.totalWorkTime}  |  Завершение C¹ = ${m1.completionTime}  |  Внутр. простой = ${m1.internalIdleTime}  |  Полный простой = ${m1.totalIdleTime}\n` +
+            `Прибор 2 (M2):  Стартовый блок T₂ = ${m2.initialBlockLoad}  |  Полезная работа = ${m2.totalWorkTime}  |  Завершение C² = ${m2.completionTime}  |  Внутр. простой = ${m2.internalIdleTime}  |  Полный простой = ${m2.totalIdleTime}`;
+        }
+
+        redraw() {
+          if (!this.lastResult) return;
+          this.gantt.render(this.lastResult, {
+            shiftRight: this.el.chkShiftRight.checked,
+            macroView: this.el.chkMacroView.checked
+          });
+        }
+
+        onSaveTxt() {
+          this.hideError();
+          try {
+            const inst = this.readInstanceFromInputs();
+            const content = JacksonIO.serializeTxt(inst);
+            this.triggerDownload(
+              new Blob([content], { type: "text/plain;charset=utf-8" }),
+              `jackson_n1-${inst.type1Jobs.length}_n2-${inst.type2Jobs.length}.txt`
+            );
+          } catch (err) {
+            this.showError(err.message || String(err));
+          }
+        }
+
+        onExportPng() {
+          if (!this.lastResult) return;
+          const a = document.createElement("a");
+          a.download = `gantt_Cmax-${this.lastResult.cMax}.png`;
+          a.href = document.getElementById("gantt-canvas").toDataURL("image/png");
+          a.click();
+        }
+
+        onExportSvg() {
+          if (!this.lastResult) return;
+          const svg = this.gantt.buildSvgString(this.lastResult, {
+            shiftRight: this.el.chkShiftRight.checked,
+            macroView: this.el.chkMacroView.checked
+          });
+          this.triggerDownload(
+            new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
+            `gantt_Cmax-${this.lastResult.cMax}.svg`
+          );
+        }
+
+        triggerDownload(blob, filename) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        onClearFields() {
+          this.hideError();
+          this.el.entT1.value = "";
+          this.el.entPi1.value = "";
+          this.el.entT2.value = "";
+          this.el.entPi2.value = "";
+          this.el.entT3.value = "";
+          this.el.entT4.value = "";
+          this.lastResult = null;
+          this.el.statsLabel.textContent = "Поля очищены. Введите данные вручную, сгенерируйте пример или загрузите .txt файл.";
+          this.gantt.clear();
+        }
+
+        loadPreset1() {
+          this.el.entT1.value = "3 6, 5 2, 4 5";
+          this.el.entPi1.value = "1 2 3";
+          this.el.entT2.value = "4 5, 8 3, 2 6";
+          this.el.entPi2.value = "1 2 3";
+          this.el.entT3.value = "3 2";
+          this.el.entT4.value = "4";
+          this.el.chkShiftRight.checked = false;
+          this.solve("manual");
+        }
+
+        loadPreset2() {
+          this.el.entT1.value = "4 3, 6 2, 5 4";
+          this.el.entPi1.value = "1 3 2";
+          this.el.entT2.value = "";
+          this.el.entPi2.value = "";
+          this.el.entT3.value = "";
+          this.el.entT4.value = "";
+          this.el.chkShiftRight.checked = true;
+          this.solve("opt");
+        }
       }
-      ctx.restore();
-    }
 
-    function setEntries(t1, pi1, t2, pi2, t3, t4, shiftRight, mode = "MANUAL") {
-      document.getElementById("ent-t1").value = t1;
-      document.getElementById("ent-pi1").value = pi1;
-      document.getElementById("ent-t2").value = t2;
-      document.getElementById("ent-pi2").value = pi2;
-      document.getElementById("ent-t3").value = t3;
-      document.getElementById("ent-t4").value = t4;
-      document.getElementById("chk-shift-right").checked = shiftRight;
-      solveAndDraw(mode);
-    }
+      // Expose core modules for console verification and automated testing.
+      window.JacksonCore = Object.freeze({
+        MT19937_64,
+        Algo: JacksonAlgo,
+        Gen: JacksonGen,
+        IO: JacksonIO,
+        runSelfTests: () => JacksonTests.runAll()
+      });
 
-    function loadPreset1() {
-      setEntries("3 6, 5 2, 4 5", "1 2 3", "4 5, 8 3, 2 6", "1 2 3", "3 2", "4", false, "MANUAL");
-    }
-
-    function loadPreset2() {
-      setEntries("4 3, 6 2, 5 4", "1 3 2", "", "", "", "", true, "OPT");
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("btn-preset-1").addEventListener("click", loadPreset1);
-      document.getElementById("btn-preset-2").addEventListener("click", loadPreset2);
-      document.getElementById("btn-generate").addEventListener("click", generateWithMersenneTwister);
-      document.getElementById("btn-solve-random").addEventListener("click", () => solveAndDraw("RANDOM"));
-      document.getElementById("btn-solve-opt").addEventListener("click", () => solveAndDraw("OPT"));
-      document.getElementById("btn-solve-anti").addEventListener("click", () => solveAndDraw("ANTI"));
-      document.getElementById("btn-solve").addEventListener("click", () => solveAndDraw("MANUAL"));
-      document.getElementById("chk-shift-right").addEventListener("change", redrawCached);
-      document.getElementById("btn-close-error").addEventListener("click", hideError);
-      document.getElementById("gen-method").addEventListener("change", updateMethodFormulaNote);
-      document.getElementById("gen-n1").addEventListener("input", () => { lastEditedN = "n1"; });
-      document.getElementById("gen-n2").addEventListener("input", () => { lastEditedN = "n2"; });
-      window.addEventListener("resize", redrawCached);
-      updateMethodFormulaNote();
-      loadPreset1();
-    });
+      window.addEventListener("DOMContentLoaded", () => {
+        new AppController();
+      });
+    })();
   </script>
 </body>
 </html>
